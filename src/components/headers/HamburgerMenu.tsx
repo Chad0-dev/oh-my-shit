@@ -57,7 +57,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           style={[
             styles.menuContainer,
             {
-              backgroundColor: "#BAC095",
+              backgroundColor: "#FFFFFF",
               transform: [{ translateX: slideAnim }],
             },
           ]}
@@ -65,7 +65,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           <View style={styles.header}>
             <Text style={styles.headerText}>메뉴</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#000000" />
+              <Ionicons name="close" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           <View style={styles.menuItems}>
@@ -119,13 +119,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
+    backgroundColor: "#636B2F",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0, 0, 0, 0.1)",
   },
   headerText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#000000",
+    color: "#FFFFFF",
   },
   closeButton: {
     padding: 4,

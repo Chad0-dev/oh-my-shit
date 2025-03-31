@@ -6,14 +6,11 @@ import {
   StyledSafeAreaView,
   StyledText,
   StyledView,
-  StyledImage,
   StyledKeyboardAvoidingView,
   StyledScrollView,
 } from "../../utils/styled";
 import { Button } from "../../components/ui/Button";
 import { InputField } from "../../components/ui/InputField";
-import { Loading } from "../../components/feedback/Loading";
-import { supabase } from "../../supabase/client";
 
 // 나이대 옵션
 const AGE_GROUPS = [
@@ -67,7 +64,6 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ onLoginPress }) => {
     if (!validateForm()) return;
 
     try {
-      // signUp 함수에 이메일, 비밀번호, 나이대를 모두 전달
       await signUp(email, password, selectedAgeGroup);
     } catch (error) {
       console.error("회원가입 오류:", error);

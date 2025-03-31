@@ -44,10 +44,6 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({ visible, onClose }) => {
                 {user?.email ? user.email.charAt(0).toUpperCase() : "U"}
               </Text>
             </View>
-            <Text style={styles.userName}>{user?.email || "사용자"}</Text>
-            <Text style={styles.userAge}>
-              {user?.age_group ? `${user.age_group}대` : ""}
-            </Text>
           </View>
 
           {/* 메뉴 아이템 */}
@@ -159,17 +155,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#FFFFFF",
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  userAge: {
-    fontSize: 14,
-    color: "#FFFFFF",
-    opacity: 0.8,
   },
   menuItems: {
     padding: 8,

@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  ImageBackground,
-  TouchableOpacity,
-} from "react-native";
+import { Platform, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuthStore } from "../../stores/authStore";
 import { useThemeStore } from "../../stores/themeStore";
 import {
@@ -18,37 +11,30 @@ import {
 } from "../../utils/styled";
 import { Button } from "../../components/ui/Button";
 import { InputField } from "../../components/ui/InputField";
-import { Loading } from "../../components/feedback/Loading";
 
 interface LoginScreenProps {
   onSignUpPress: () => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
-  const { signIn, signUp, isLoading, error, clearError } = useAuthStore();
+  const { signIn, isLoading, error, clearError } = useAuthStore();
   const { isDark } = useThemeStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isRegister, setIsRegister] = useState(false);
 
   const handleSubmit = async () => {
-    if (isRegister) {
-      await signUp(email, password);
-    } else {
-      await signIn(email, password);
-    }
-  };
-
-  const toggleMode = () => {
-    setIsRegister(!isRegister);
     clearError();
-  };
 
-  // 개발용 테스트 계정 자동 입력 (나중에 제거 예정)
-  const fillTestAccount = () => {
-    setEmail("test@test.com");
-    setPassword("1234");
+    if (!email || !password) {
+      return;
+    }
+
+    try {
+      await signIn(email, password);
+    } catch (error) {
+      console.error("로그인 처리 오류:", error);
+    }
   };
 
   return (
@@ -120,21 +106,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
               fullWidth
               style={styles.marginTopSmall}
             />
-
-            {/* 개발 모드 테스트 계정 버튼 - 배포 전 제거 필요 */}
-            <TouchableOpacity
-              onPress={fillTestAccount}
-              style={styles.testAccountButton}
-            >
-              <StyledText
-                className={`text-xs italic text-center ${
-                  isDark ? "text-mossy-medium" : "text-mossy-dark"
-                }`}
-              >
-                {/* TODO: 배포 전 제거 - 개발용 테스트 계정 */}
-                테스트 계정 자동 입력 (test@test.com/1234)
-              </StyledText>
-            </TouchableOpacity>
           </StyledView>
         </StyledView>
       </StyledKeyboardAvoidingView>
@@ -148,9 +119,5 @@ const styles = StyleSheet.create({
   },
   marginTopSmall: {
     marginTop: 8,
-  },
-  testAccountButton: {
-    marginTop: 20,
-    paddingVertical: 8,
   },
 });
