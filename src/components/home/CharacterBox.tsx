@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Dimensions, Animated } from "react-native";
+import { View, StyleSheet, Dimensions, Animated, Image } from "react-native";
 import { useTimerStore } from "../../stores/timerStore";
 
 const { width, height } = Dimensions.get("window");
@@ -40,7 +40,13 @@ export const CharacterBox = () => {
           transform: [{ scale: pulseAnim }],
         },
       ]}
-    />
+    >
+      <Image
+        source={require("../../../assets/images/pooping-cat.png")}
+        style={styles.image}
+        resizeMode="contain"
+      />
+    </Animated.View>
   );
 };
 
@@ -48,9 +54,24 @@ const styles = StyleSheet.create({
   container: {
     width: width * 0.8,
     height: height * 0.3,
-    backgroundColor: "#4A90E2",
+    backgroundColor: "#F5F5F5",
     alignSelf: "center",
     marginTop: 40,
     borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
   },
 });
