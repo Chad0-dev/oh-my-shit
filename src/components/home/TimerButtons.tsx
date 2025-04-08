@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTimerStore } from "../../stores/timerStore";
+import { useAuthStore } from "../../stores/authStore";
 import { ReadingModal } from "../../modals/ReadingModal";
 import { ResultModal } from "../../modals/ResultModal";
 import { useModalManager } from "../../hooks/useModalManager";
@@ -20,7 +21,13 @@ export const TimerButtons = () => {
     resetTotalTime,
     timerComplete,
     setTimerComplete,
+    saveRecord,
+    recordSaving,
+    recordError,
+    clearRecordError,
   } = useTimerStore();
+
+  const { user } = useAuthStore();
 
   const {
     isReadingModalVisible,
@@ -44,6 +51,15 @@ export const TimerButtons = () => {
     }
   }, [timerComplete]);
 
+  // 기록 에러 감지
+  useEffect(() => {
+    if (recordError) {
+      Alert.alert("저장 실패", recordError, [
+        { text: "확인", onPress: clearRecordError },
+      ]);
+    }
+  }, [recordError]);
+
   // 버튼 핸들러
   const handlePlayPress = () => {
     if (buttonState === "play") {
@@ -60,13 +76,23 @@ export const TimerButtons = () => {
   };
 
   // 결과 제출 처리
-  const processResultSubmit = (success: boolean) => {
-    // 타이머 리셋 후 상태 초기화
-    resetTimer(); // resetTimer에서 이미 buttonState를 'play'로 설정함
-    resetTotalTime(); // totalTime 초기화 추가
+  const processResultSubmit = async (success: boolean) => {
+    if (!user) {
+      Alert.alert("로그인 필요", "결과를 저장하려면 로그인이 필요합니다.");
+      return;
+    }
 
-    // 전체 UI 리렌더링을 위한 신호 발생
-    toggleResetSignal();
+    // 결과 저장
+    const savedSuccessfully = await saveRecord(user.id, success);
+
+    if (savedSuccessfully) {
+      // 타이머 리셋 후 상태 초기화
+      resetTimer(); // resetTimer에서 이미 buttonState를 'play'로 설정함
+      resetTotalTime(); // totalTime 초기화 추가
+
+      // 전체 UI 리렌더링을 위한 신호 발생
+      toggleResetSignal();
+    }
   };
 
   // 버튼 아이콘 선택

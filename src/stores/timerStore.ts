@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { saveShitRecord } from "../services/recordService";
 
 interface TimerState {
   startTime: number | null; // 시작 시간 (timestamp, Date.now())
@@ -11,6 +12,8 @@ interface TimerState {
   buttonState: "play" | "plus" | "slash"; // 버튼 상태 추가
   totalTime: number; // 총 시간(초)
   timerComplete: boolean; // 타이머 완료 여부
+  recordSaving: boolean; // 기록 저장 중 여부
+  recordError: string | null; // 기록 저장 에러
   setButtonState: (state: "play" | "plus" | "slash") => void;
   toggleResetSignal: () => void;
   startTimer: () => void;
@@ -21,6 +24,9 @@ interface TimerState {
   addTime: (seconds: number) => void;
   resetTotalTime: () => void;
   setTimerComplete: (complete: boolean) => void; // 타이머 완료 설정 함수
+  // 기록 저장 함수
+  saveRecord: (userId: string, success: boolean) => Promise<boolean>;
+  clearRecordError: () => void;
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -33,6 +39,8 @@ export const useTimerStore = create<TimerState>()(
       buttonState: "play", // 기본값은 'play'
       totalTime: 300, // 기본 5분(300초)
       timerComplete: false, // 타이머 완료 기본값
+      recordSaving: false, // 기록 저장 중 여부
+      recordError: null, // 기록 저장 에러
 
       setButtonState: (state) => set({ buttonState: state }),
 
@@ -87,6 +95,52 @@ export const useTimerStore = create<TimerState>()(
       setTimerComplete: (complete) => {
         set({ timerComplete: complete });
       },
+
+      // 기록 저장 함수
+      saveRecord: async (userId, success) => {
+        const { startTime } = get();
+
+        if (!startTime) {
+          set({ recordError: "시작 시간이 없습니다." });
+          return false;
+        }
+
+        try {
+          set({ recordSaving: true, recordError: null });
+
+          const endTime = new Date().toISOString();
+          const startTimeISO = new Date(startTime).toISOString();
+          const duration = Math.floor((Date.now() - startTime) / 1000);
+
+          const record = {
+            user_id: userId,
+            start_time: startTimeISO,
+            end_time: endTime,
+            duration: duration,
+            success: success,
+            // amount와 memo는 필요에 따라 별도의 모달에서 입력받을 수 있습니다.
+          };
+
+          const { data, error } = await saveShitRecord(record);
+
+          if (error) {
+            throw error;
+          }
+
+          set({ recordSaving: false });
+          return true;
+        } catch (error: any) {
+          console.error("기록 저장 실패:", error.message);
+          set({
+            recordSaving: false,
+            recordError: error.message || "기록 저장에 실패했습니다.",
+          });
+          return false;
+        }
+      },
+
+      // 기록 에러 초기화
+      clearRecordError: () => set({ recordError: null }),
     }),
     {
       name: "timer-storage", // 스토리지 고유 이름
