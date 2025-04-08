@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, TouchableOpacity, Text } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
 import { StyledText, StyledView, StyledScrollView } from "../../utils/styled";
 import { Button } from "../../components/ui/Button";
@@ -45,11 +45,12 @@ export const MapScreen: React.FC = () => {
           이 영역에는 지도 API가 통합되어 주변 화장실을 표시할 예정입니다.
         </StyledText>
 
-        <Button
-          title="내 주변 화장실 찾기"
-          variant="primary"
-          onPress={() => console.log("주변 화장실 검색")}
-        />
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={() => alert("준비 중인 기능입니다.")}
+        >
+          <Text style={styles.searchButtonText}>주변 화장실 검색</Text>
+        </TouchableOpacity>
       </StyledView>
 
       {/* 하단 정보 패널 */}
@@ -86,14 +87,39 @@ export const MapScreen: React.FC = () => {
               거리: 약 250m
             </StyledText>
           </StyledView>
-          <Button
-            title="길 안내"
-            variant="outline"
-            size="small"
-            onPress={() => console.log("길 안내")}
-          />
+          <TouchableOpacity
+            style={styles.directionButton}
+            onPress={() => alert("준비 중인 기능입니다.")}
+          >
+            <Text style={styles.directionButtonText}>길 안내</Text>
+          </TouchableOpacity>
         </StyledView>
       </StyledView>
     </StyledView>
   );
 };
+
+const styles = StyleSheet.create({
+  searchButton: {
+    backgroundColor: "#007bff",
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  searchButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  directionButton: {
+    backgroundColor: "#6c757d",
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  directionButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});

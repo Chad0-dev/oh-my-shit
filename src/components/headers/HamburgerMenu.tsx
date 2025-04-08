@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
+  BackHandler,
 } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,38 +21,87 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   onClose,
 }) => {
   const { isDark } = useThemeStore();
-  const slideAnim = React.useRef(new Animated.Value(-210)).current;
+  const slideAnim = useRef(new Animated.Value(-210)).current;
+  const isClosing = useRef(false);
+  const mountedRef = useRef(true);
 
-  React.useEffect(() => {
+  // 컴포넌트 마운트/언마운트 관리
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // 뒤로가기 버튼 처리
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (visible && !isClosing.current) {
+          handleClose();
+          return true;
+        }
+        return false;
+      }
+    );
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [visible]);
+
+  // 애니메이션 처리
+  useEffect(() => {
     if (visible) {
-      Animated.spring(slideAnim, {
+      isClosing.current = false;
+      // 열기 애니메이션
+      Animated.timing(slideAnim, {
         toValue: 0,
+        duration: 200,
         useNativeDriver: true,
-        tension: 50,
-        friction: 7,
       }).start();
-    } else {
-      Animated.spring(slideAnim, {
+    } else if (mountedRef.current) {
+      // 닫기 애니메이션
+      Animated.timing(slideAnim, {
         toValue: -210,
+        duration: 150,
         useNativeDriver: true,
-        tension: 50,
-        friction: 7,
       }).start();
     }
   }, [visible]);
+
+  // 메뉴 닫기 처리
+  const handleClose = () => {
+    if (isClosing.current) return;
+
+    isClosing.current = true;
+    // 닫기 애니메이션 후 onClose 호출
+    Animated.timing(slideAnim, {
+      toValue: -210,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      onClose();
+      if (mountedRef.current) {
+        isClosing.current = false;
+      }
+    });
+  };
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={handleClose}
+      statusBarTranslucent={true}
     >
       <View style={styles.modalOverlay}>
         <TouchableOpacity
           style={styles.backdrop}
           activeOpacity={1}
-          onPress={onClose}
+          onPress={handleClose}
         />
         <Animated.View
           style={[
@@ -65,7 +115,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           <View style={styles.header}>
             <Text style={styles.headerText}>메뉴</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#FFFFFF" />
+              <Ionicons name="close" size={24} color="#000000" />
             </TouchableOpacity>
           </View>
           <View style={styles.menuItems}>
@@ -126,7 +176,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#000000",
   },
   closeButton: {
     padding: 4,

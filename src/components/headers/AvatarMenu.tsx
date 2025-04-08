@@ -1,7 +1,14 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
-import { COLORS } from "../../constants/theme";
+import React, { useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Animated,
+} from "react-native";
 import { useAuthStore } from "../../stores/authStore";
+import { MenuItem } from "./MenuItem";
 
 interface AvatarMenuProps {
   visible: boolean;
@@ -10,33 +17,145 @@ interface AvatarMenuProps {
 
 export const AvatarMenu: React.FC<AvatarMenuProps> = ({ visible, onClose }) => {
   const { user, signOut } = useAuthStore();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const isClosing = useRef(false);
+  const mountedRef = useRef(true);
+
+  // 컴포넌트 마운트/언마운트 관리
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // 애니메이션 처리
+  useEffect(() => {
+    if (visible) {
+      isClosing.current = false;
+      // 열기 애니메이션
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else if (mountedRef.current) {
+      // 닫기 애니메이션
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 50,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
+  const handleClose = () => {
+    if (isClosing.current) return;
+
+    isClosing.current = true;
+    // 닫기 애니메이션 후 onClose 호출
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 50,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+      if (mountedRef.current) {
+        isClosing.current = false;
+      }
+    });
+  };
 
   const handleLogout = async () => {
     try {
       await signOut();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error("로그아웃 실패:", error);
     }
   };
 
+  const handleProfilePress = () => {
+    // 내 프로필 화면으로 이동 로직
+    handleClose();
+  };
+
+  const handleSettingsPress = () => {
+    // 설정 화면으로 이동 로직
+    handleClose();
+  };
+
+  const handleInfoPress = () => {
+    // 앱 정보 화면으로 이동 로직
+    handleClose();
+  };
+
+  // 메뉴 아이템 정의
+  const menuItems = [
+    {
+      icon: "👤",
+      label: "내 프로필",
+      onPress: handleProfilePress,
+    },
+    {
+      icon: "⚙️",
+      label: "설정",
+      onPress: handleSettingsPress,
+    },
+    {
+      icon: "ℹ️",
+      label: "앱 정보",
+      onPress: handleInfoPress,
+    },
+  ];
+
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={handleClose}
     >
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
         {/* 배경 오버레이 (터치 시 메뉴 닫힘) */}
         <TouchableOpacity
           style={styles.overlay}
           activeOpacity={1}
-          onPress={onClose}
+          onPress={handleClose}
         />
 
         {/* 메뉴 컨테이너 */}
-        <View style={styles.menuContainer}>
+        <Animated.View
+          style={[
+            styles.menuContainer,
+            {
+              transform: [{ translateY: slideAnim }],
+              opacity: fadeAnim,
+            },
+          ]}
+        >
           {/* 헤더 */}
           <View style={styles.header}>
             <View style={styles.avatarCircle}>
@@ -48,51 +167,27 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({ visible, onClose }) => {
 
           {/* 메뉴 아이템 */}
           <View style={styles.menuItems}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                console.log("내 프로필 선택됨");
-                onClose();
-              }}
-            >
-              <Text style={styles.menuIcon}>👤</Text>
-              <Text style={styles.menuText}>내 프로필</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                console.log("설정 선택됨");
-                onClose();
-              }}
-            >
-              <Text style={styles.menuIcon}>⚙️</Text>
-              <Text style={styles.menuText}>설정</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                console.log("앱 정보 선택됨");
-                onClose();
-              }}
-            >
-              <Text style={styles.menuIcon}>ℹ️</Text>
-              <Text style={styles.menuText}>앱 정보</Text>
-            </TouchableOpacity>
+            {menuItems.map((item, index) => (
+              <MenuItem
+                key={index}
+                icon={item.icon}
+                label={item.label}
+                onPress={item.onPress}
+              />
+            ))}
 
             <View style={styles.divider} />
 
-            <TouchableOpacity
-              style={[styles.menuItem, styles.logoutButton]}
+            <MenuItem
+              icon="🚪"
+              label="로그아웃"
               onPress={handleLogout}
-            >
-              <Text style={styles.menuIcon}>🚪</Text>
-              <Text style={styles.logoutText}>로그아웃</Text>
-            </TouchableOpacity>
+              containerStyle={styles.logoutButton}
+              textStyle={styles.logoutText}
+            />
           </View>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -159,21 +254,6 @@ const styles = StyleSheet.create({
   menuItems: {
     padding: 8,
   },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 4,
-  },
-  menuIcon: {
-    fontSize: 18,
-    marginRight: 12,
-  },
-  menuText: {
-    fontSize: 14,
-    color: "#333333",
-  },
   divider: {
     height: 1,
     backgroundColor: "#E5E7EB",
@@ -183,7 +263,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   logoutText: {
-    fontSize: 14,
     color: "#EF4444",
   },
 });
