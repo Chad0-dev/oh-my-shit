@@ -98,7 +98,7 @@ export const CalendarScreen: React.FC = () => {
         day: selectedDate || 1,
       };
     }
-  }, []);
+  }, [currentYear, currentMonth, selectedDate, didInitialLoad]);
 
   // 일간 기록 로드 - 날짜 변경 시 또는 월 변경 시
   useEffect(() => {
@@ -112,42 +112,6 @@ export const CalendarScreen: React.FC = () => {
     user,
     recordActions.fetchDailyRecords,
   ]);
-
-  // goToPrevMonth 래핑 함수
-  const handlePrevMonth = useCallback(() => {
-    // 월 변경 전에 기존 상태 저장
-    const wasChanged = hasMonthChanged();
-
-    // 이전 달로 이동 (내부적으로 selectedDate가 1로 설정됨)
-    goToPrevMonth();
-
-    // 상태 업데이트 후 즉시 1일 기록 로드 (필요시)
-    if (!wasChanged) {
-      setTimeout(() => {
-        if (user) {
-          recordActions.fetchDailyRecords();
-        }
-      }, 0);
-    }
-  }, [goToPrevMonth, user, hasMonthChanged, recordActions.fetchDailyRecords]);
-
-  // goToNextMonth 래핑 함수
-  const handleNextMonth = useCallback(() => {
-    // 월 변경 전에 기존 상태 저장
-    const wasChanged = hasMonthChanged();
-
-    // 다음 달로 이동 (내부적으로 selectedDate가 1로 설정됨)
-    goToNextMonth();
-
-    // 상태 업데이트 후 즉시 1일 기록 로드 (필요시)
-    if (!wasChanged) {
-      setTimeout(() => {
-        if (user) {
-          recordActions.fetchDailyRecords();
-        }
-      }, 0);
-    }
-  }, [goToNextMonth, user, hasMonthChanged, recordActions.fetchDailyRecords]);
 
   // TimePicker 모달 표시 핸들러
   const handleShowTimePicker = useCallback(() => {
@@ -174,8 +138,8 @@ export const CalendarScreen: React.FC = () => {
       <CalendarHeader
         currentYear={currentYear}
         currentMonth={currentMonth}
-        goToPrevMonth={handlePrevMonth}
-        goToNextMonth={handleNextMonth}
+        goToPrevMonth={goToPrevMonth}
+        goToNextMonth={goToNextMonth}
       />
 
       {/* 달력 그리드 */}

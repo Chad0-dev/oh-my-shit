@@ -6,6 +6,7 @@ import {
   getDailyShitRecords,
   ShitRecord,
   saveShitRecord,
+  deleteShitRecord,
 } from "../services/recordService";
 import {
   generateCalendarData,
@@ -68,7 +69,6 @@ export const useRecordActions = ({
       );
       setDays(days);
     } catch (error) {
-      console.error("월별 기록 조회 실패:", error);
       Alert.alert("오류", "기록을 불러오는데 실패했습니다.");
     } finally {
       setIsLoading(false);
@@ -90,7 +90,6 @@ export const useRecordActions = ({
       const displayRecords = (records || []).map(convertToDisplayRecord);
       setSelectedDayRecords(displayRecords);
     } catch (error) {
-      console.error("일별 기록 조회 실패:", error);
       Alert.alert("오류", "기록을 불러오는데 실패했습니다.");
     } finally {
       setIsLoading(false);
@@ -156,7 +155,6 @@ export const useRecordActions = ({
 
       Alert.alert("완료", "기록이 성공적으로 추가되었습니다.");
     } catch (error) {
-      console.error("기록 추가 실패:", error);
       Alert.alert("오류", "기록 추가에 실패했습니다.");
     } finally {
       setIsLoading(false);
@@ -185,10 +183,7 @@ export const useRecordActions = ({
 
       setIsDeleteLoading(true);
       try {
-        const { error } = await supabase
-          .from("shit_records")
-          .delete()
-          .eq("id", id);
+        const { error } = await deleteShitRecord(id);
 
         if (error) throw error;
 
@@ -198,7 +193,6 @@ export const useRecordActions = ({
 
         Alert.alert("완료", "기록이 삭제되었습니다.");
       } catch (error) {
-        console.error("기록 삭제 실패:", error);
         Alert.alert("오류", "기록 삭제에 실패했습니다.");
       } finally {
         setIsDeleteLoading(false);

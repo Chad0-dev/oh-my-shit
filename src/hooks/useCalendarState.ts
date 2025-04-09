@@ -46,13 +46,23 @@ export const useCalendarState = () => {
     // 현재 상태 값 저장
     prevMonthRef.current = { year: currentYear, month: currentMonth };
 
+    // 연도와 월 계산
+    let newYear = currentYear;
+    let newMonth = currentMonth;
+
     if (currentMonth === 1) {
-      setCurrentYear(currentYear - 1);
-      setCurrentMonth(12);
+      newYear = currentYear - 1;
+      newMonth = 12;
     } else {
-      setCurrentMonth(currentMonth - 1);
+      newMonth = currentMonth - 1;
     }
-    setSelectedDate(1); // 1일을 자동으로 선택
+
+    // 상태 업데이트
+    setCurrentYear(newYear);
+    setCurrentMonth(newMonth);
+
+    // 항상 1일로 설정 - 중요!
+    setSelectedDate(1);
   }, [currentMonth, currentYear]);
 
   // 다음달로 이동
@@ -60,13 +70,23 @@ export const useCalendarState = () => {
     // 현재 상태 값 저장
     prevMonthRef.current = { year: currentYear, month: currentMonth };
 
+    // 연도와 월 계산
+    let newYear = currentYear;
+    let newMonth = currentMonth;
+
     if (currentMonth === 12) {
-      setCurrentYear(currentYear + 1);
-      setCurrentMonth(1);
+      newYear = currentYear + 1;
+      newMonth = 1;
     } else {
-      setCurrentMonth(currentMonth + 1);
+      newMonth = currentMonth + 1;
     }
-    setSelectedDate(1); // 1일을 자동으로 선택
+
+    // 상태 업데이트
+    setCurrentYear(newYear);
+    setCurrentMonth(newMonth);
+
+    // 항상 1일로 설정 - 중요!
+    setSelectedDate(1);
   }, [currentMonth, currentYear]);
 
   // 날짜 선택
