@@ -12,3 +12,30 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: false,
   },
 });
+
+// 세션 상태 확인 함수
+export const checkSession = async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn("세션 확인 오류:", error.message);
+      return false;
+    }
+    return !!data.session;
+  } catch (error) {
+    console.error("세션 확인 중 예외 발생:", error);
+    return false;
+  }
+};
+
+// 세션 초기화 함수
+export const resetSession = async () => {
+  try {
+    await supabase.auth.signOut();
+    console.log("세션이 초기화되었습니다.");
+    return true;
+  } catch (error) {
+    console.error("세션 초기화 중 오류 발생:", error);
+    return false;
+  }
+};

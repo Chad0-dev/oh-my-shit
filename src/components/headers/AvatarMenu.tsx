@@ -9,13 +9,19 @@ import {
 } from "react-native";
 import { useAuthStore } from "../../stores/authStore";
 import { MenuItem } from "./MenuItem";
+import { HamburgerScreenType } from "../../screens/AppNavigation";
 
 interface AvatarMenuProps {
   visible: boolean;
   onClose: () => void;
+  onNavigate?: (screen: HamburgerScreenType) => void;
 }
 
-export const AvatarMenu: React.FC<AvatarMenuProps> = ({ visible, onClose }) => {
+export const AvatarMenu: React.FC<AvatarMenuProps> = ({
+  visible,
+  onClose,
+  onNavigate,
+}) => {
   const { user, signOut } = useAuthStore();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -98,17 +104,23 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({ visible, onClose }) => {
   };
 
   const handleProfilePress = () => {
-    // 내 프로필 화면으로 이동 로직
+    if (onNavigate) {
+      onNavigate("profile" as HamburgerScreenType);
+    }
     handleClose();
   };
 
   const handleSettingsPress = () => {
-    // 설정 화면으로 이동 로직
+    if (onNavigate) {
+      onNavigate("settings" as HamburgerScreenType);
+    }
     handleClose();
   };
 
   const handleInfoPress = () => {
-    // 앱 정보 화면으로 이동 로직
+    if (onNavigate) {
+      onNavigate("notifications" as HamburgerScreenType);
+    }
     handleClose();
   };
 

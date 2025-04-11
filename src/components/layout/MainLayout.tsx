@@ -11,12 +11,15 @@ import { StyledSafeAreaView, StyledView } from "../../utils/styled";
 import { Header } from "./Header";
 import { Footer, TabName } from "./Footer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { HamburgerScreenType } from "../../screens/AppNavigation";
 
 interface MainLayoutProps {
   children: React.ReactNode;
   title?: string;
   activeTab: TabName;
   onTabChange: (tab: TabName) => void;
+  onNavigateTo?: (screen: HamburgerScreenType) => void;
+  currentScreen?: HamburgerScreenType;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
@@ -24,9 +27,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   title,
   activeTab,
   onTabChange,
+  onNavigateTo,
+  currentScreen,
 }) => {
   const { isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
+
+  const handleNavigateTo = (screen: HamburgerScreenType) => {
+    if (onNavigateTo) {
+      onNavigateTo(screen);
+    }
+  };
 
   return (
     <View
@@ -41,7 +52,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         backgroundColor={isDark ? "#636B2F" : "#D4DE95"}
       />
 
-      <Header title={title} />
+      <Header title={title} onNavigateTo={handleNavigateTo} />
 
       <StyledView className="flex-1">{children}</StyledView>
 

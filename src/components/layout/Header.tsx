@@ -5,17 +5,20 @@ import { StyledText, StyledView } from "../../utils/styled";
 import { useAuthStore } from "../../stores/authStore";
 import { HamburgerMenu } from "../headers/HamburgerMenu";
 import { AvatarMenu } from "../headers/AvatarMenu";
+import { HamburgerScreenType } from "../../screens/AppNavigation";
 
 interface HeaderProps {
   title?: string;
   onMenuPress?: () => void;
   onAvatarPress?: () => void;
+  onNavigateTo?: (screen: HamburgerScreenType) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   title = "Oh My Sh!t",
   onMenuPress,
   onAvatarPress,
+  onNavigateTo,
 }) => {
   const { isDark } = useThemeStore();
   const { user } = useAuthStore();
@@ -76,6 +79,17 @@ export const Header: React.FC<HeaderProps> = ({
     setAvatarMenuVisible(false);
   }, [clearMenuTimeout]);
 
+  // 햄버거 메뉴 화면으로 이동
+  const handleNavigate = useCallback(
+    (screen: HamburgerScreenType) => {
+      if (onNavigateTo) {
+        handleHamburgerMenuClose();
+        onNavigateTo(screen);
+      }
+    },
+    [onNavigateTo, handleHamburgerMenuClose]
+  );
+
   return (
     <>
       <View
@@ -106,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
             textAlign: "center",
           }}
         >
-          Oh My Sh!t
+          {title}
         </Text>
 
         {/* 아바타 메뉴 */}
@@ -138,10 +152,15 @@ export const Header: React.FC<HeaderProps> = ({
       <HamburgerMenu
         visible={hamburgerMenuVisible}
         onClose={handleHamburgerMenuClose}
+        onNavigate={handleNavigate}
       />
 
       {/* 아바타 메뉴 팝업 */}
-      <AvatarMenu visible={avatarMenuVisible} onClose={handleAvatarMenuClose} />
+      <AvatarMenu
+        visible={avatarMenuVisible}
+        onClose={handleAvatarMenuClose}
+        onNavigate={handleNavigate}
+      />
     </>
   );
 };

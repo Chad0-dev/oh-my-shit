@@ -10,15 +10,18 @@ import {
 } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
 import { Ionicons } from "@expo/vector-icons";
+import { HamburgerScreenType } from "../../screens/AppNavigation";
 
 interface HamburgerMenuProps {
   visible: boolean;
   onClose: () => void;
+  onNavigate?: (screen: HamburgerScreenType) => void;
 }
 
 export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   visible,
   onClose,
+  onNavigate,
 }) => {
   const { isDark } = useThemeStore();
   const slideAnim = useRef(new Animated.Value(-210)).current;
@@ -89,6 +92,14 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
     });
   };
 
+  // 페이지 이동 처리
+  const handleNavigation = (screen: HamburgerScreenType) => {
+    if (onNavigate) {
+      onNavigate(screen);
+      handleClose();
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -113,26 +124,35 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           ]}
         >
           <View style={styles.header}>
-            <Text style={styles.headerText}>메뉴</Text>
+            <Text style={styles.headerText}>MENU</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#000000" />
+              <Ionicons name="close" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           <View style={styles.menuItems}>
-            <TouchableOpacity style={styles.menuItem}>
-              <Text style={styles.menuText}>홈</Text>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleNavigation("store")}
+            >
+              <Text style={styles.menuText}>상점</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
-              <Text style={styles.menuText}>프로필</Text>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleNavigation("manual")}
+            >
+              <Text style={styles.menuText}>설명서</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
-              <Text style={styles.menuText}>설정</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleNavigation("help")}
+            >
               <Text style={styles.menuText}>도움말</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
-              <Text style={styles.menuText}>통계</Text>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleNavigation("contact")}
+            >
+              <Text style={styles.menuText}>문의하기</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -176,7 +196,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#000000",
+    color: "#FFFFFF",
   },
   closeButton: {
     padding: 4,
