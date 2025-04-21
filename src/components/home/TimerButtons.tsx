@@ -27,6 +27,7 @@ export const TimerButtons = () => {
     recordSaving,
     recordError,
     clearRecordError,
+    setResultState,
   } = useTimerStore();
 
   const { user } = useAuthStore();
@@ -87,6 +88,9 @@ export const TimerButtons = () => {
       return;
     }
 
+    // 결과 상태 설정
+    setResultState("success");
+
     // 결과 모달 닫고 세부사항 모달 표시
     handleResultSubmit(() => {
       showSuccessDetailModal();
@@ -99,6 +103,9 @@ export const TimerButtons = () => {
       Alert.alert("로그인 필요", "결과를 저장하려면 로그인이 필요합니다.");
       return;
     }
+
+    // 결과 상태 설정
+    setResultState("fail");
 
     // 모달을 확실히 닫고 결과 처리
     hideAllModals();
@@ -135,9 +142,17 @@ export const TimerButtons = () => {
     const savedSuccessfully = await saveRecord(user.id, success, amount, memo);
 
     if (savedSuccessfully) {
-      // 타이머 리셋 후 상태 초기화
-      resetTimer(); // resetTimer에서 이미 buttonState를 'play'로 설정함
-      resetTotalTime(); // totalTime 초기화 추가
+      // 타이머는 리셋하되 resultState는 유지
+      setButtonState("play");
+      resetTotalTime();
+
+      // 다른 필요한 상태들 초기화 (resultState 제외)
+      useTimerStore.setState({
+        isRunning: false,
+        elapsed: 0,
+        startTime: null,
+        timerComplete: false,
+      });
 
       // 전체 UI 리렌더링을 위한 신호 발생
       toggleResetSignal();

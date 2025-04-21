@@ -4,6 +4,9 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { saveShitRecord, AmountType } from "../services/recordService";
 
+// 결과 상태 타입 정의
+type ResultState = "success" | "fail" | null;
+
 interface TimerState {
   startTime: number | null; // 시작 시간 (timestamp, Date.now())
   isRunning: boolean;
@@ -14,6 +17,7 @@ interface TimerState {
   timerComplete: boolean; // 타이머 완료 여부
   recordSaving: boolean; // 기록 저장 중 여부
   recordError: string | null; // 기록 저장 에러
+  resultState: ResultState; // 결과 상태 추가
   setButtonState: (state: "play" | "plus" | "slash") => void;
   toggleResetSignal: () => void;
   startTimer: () => void;
@@ -32,6 +36,10 @@ interface TimerState {
     memo?: string
   ) => Promise<boolean>;
   clearRecordError: () => void;
+  // 결과 상태 설정 함수 추가
+  setResultState: (state: ResultState) => void;
+  // 전체 상태 초기화 (결과 상태 포함)
+  resetAllState: () => void;
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -46,6 +54,7 @@ export const useTimerStore = create<TimerState>()(
       timerComplete: false, // 타이머 완료 기본값
       recordSaving: false, // 기록 저장 중 여부
       recordError: null, // 기록 저장 에러
+      resultState: null, // 결과 상태 기본값 null
 
       setButtonState: (state) => set({ buttonState: state }),
 
@@ -58,6 +67,7 @@ export const useTimerStore = create<TimerState>()(
           startTime: now,
           isRunning: true,
           timerComplete: false, // 타이머 시작 시 완료 상태 초기화
+          resultState: null, // 타이머 시작 시 결과 상태 초기화
         });
       },
 
@@ -77,6 +87,7 @@ export const useTimerStore = create<TimerState>()(
           buttonState: "play", // 타이머 리셋 시 버튼 상태도 초기화
           totalTime: 300, // 타이머 리셋 시 totalTime도 초기화
           timerComplete: false, // 타이머 리셋 시 완료 상태도 초기화
+          // resultState 초기화하지 않음
         });
       },
 
@@ -101,6 +112,11 @@ export const useTimerStore = create<TimerState>()(
         set({ timerComplete: complete });
       },
 
+      // 결과 상태 설정 함수
+      setResultState: (state) => {
+        set({ resultState: state });
+      },
+
       // 기록 저장 함수
       saveRecord: async (userId, success, amount, memo) => {
         const { startTime } = get();
@@ -111,7 +127,11 @@ export const useTimerStore = create<TimerState>()(
         }
 
         try {
-          set({ recordSaving: true, recordError: null });
+          set({
+            recordSaving: true,
+            recordError: null,
+            resultState: success ? "success" : "fail", // 결과 상태 설정
+          });
 
           const endTime = new Date().toISOString();
           const startTimeISO = new Date(startTime).toISOString();
@@ -147,6 +167,19 @@ export const useTimerStore = create<TimerState>()(
 
       // 기록 에러 초기화
       clearRecordError: () => set({ recordError: null }),
+
+      // 전체 상태 초기화 (결과 상태 포함)
+      resetAllState: () => {
+        set({
+          startTime: null,
+          isRunning: false,
+          elapsed: 0,
+          buttonState: "play",
+          totalTime: 300,
+          timerComplete: false,
+          resultState: null,
+        });
+      },
     }),
     {
       name: "timer-storage", // 스토리지 고유 이름

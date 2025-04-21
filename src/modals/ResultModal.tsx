@@ -9,6 +9,7 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTimerStore } from "../stores/timerStore";
 
 interface ResultModalProps {
   visible: boolean;
@@ -23,6 +24,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   onSuccess,
   onFailure,
 }) => {
+  const { setResultState } = useTimerStore();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const isClosing = useRef(false);
@@ -112,6 +114,9 @@ export const ResultModal: React.FC<ResultModalProps> = ({
     if (isClosing.current || isAnimating.current) return;
     isClosing.current = true;
 
+    // 결과 상태 설정
+    setResultState("success");
+
     // 애니메이션 후 결과 처리
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -145,6 +150,9 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   const handleFailure = () => {
     if (isClosing.current || isAnimating.current) return;
     isClosing.current = true;
+
+    // 결과 상태 설정
+    setResultState("fail");
 
     // 애니메이션 후 결과 처리
     Animated.parallel([

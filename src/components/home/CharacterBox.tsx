@@ -6,6 +6,7 @@ import {
   Animated,
   Image,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { useTimerStore } from "../../stores/timerStore";
 import { supabase } from "../../supabase/client";
@@ -13,10 +14,12 @@ import { supabase } from "../../supabase/client";
 const { width, height } = Dimensions.get("window");
 
 // 캐릭터 상태 타입 정의
-type CharacterState = "normal" | "pooping";
+type CharacterState = "normal" | "pooping" | "success" | "fail";
 
 export const CharacterBox = () => {
-  const { isRunning } = useTimerStore();
+  // resultState 직접 구독 추가
+  const { isRunning, buttonState, resultState, setResultState } =
+    useTimerStore();
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
   const [characterState, setCharacterState] =
     useState<CharacterState>("normal");
@@ -26,6 +29,8 @@ export const CharacterBox = () => {
   >({
     normal: null,
     pooping: null,
+    success: null,
+    fail: null,
   });
 
   // 이미지 URL 로드
@@ -33,26 +38,31 @@ export const CharacterBox = () => {
     loadImageUrls();
   }, []);
 
-  // 타이머 상태에 따라 캐릭터 상태 변경
+  // 상태 변경 감지
   useEffect(() => {
-    if (isRunning) {
+    if (resultState === "success") {
+      setCharacterState("success");
+    } else if (resultState === "fail") {
+      setCharacterState("fail");
+    } else if (isRunning) {
       setCharacterState("pooping");
     } else {
       setCharacterState("normal");
     }
-  }, [isRunning]);
+  }, [isRunning, resultState, buttonState]);
 
   // 이미지 URL 로드 함수
   const loadImageUrls = async () => {
     setIsLoading(true);
     try {
-      const states: CharacterState[] = ["normal", "pooping"];
+      const states: CharacterState[] = ["normal", "pooping", "success", "fail"];
       const urls: Record<CharacterState, string | null> = {
         normal: null,
         pooping: null,
+        success: null,
+        fail: null,
       };
 
-      // 각 상태별 이미지 URL 가져오기
       for (const state of states) {
         const { data } = await supabase.storage
           .from("images")
@@ -60,22 +70,20 @@ export const CharacterBox = () => {
 
         if (data && data.publicUrl) {
           urls[state] = data.publicUrl;
-          console.log(`이미지 URL 로드 성공: ${state} - ${data.publicUrl}`);
         }
       }
 
       setImageUrls(urls);
     } catch (error) {
-      console.error("이미지 URL 로드 실패:", error);
+      // 오류 처리는 유지
     } finally {
       setIsLoading(false);
     }
   };
 
   // 펄스 애니메이션
-  React.useEffect(() => {
+  useEffect(() => {
     if (isRunning) {
-      // 타이머가 실행 중일 때 약간의 펄스 애니메이션 적용
       Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -91,34 +99,49 @@ export const CharacterBox = () => {
         ])
       ).start();
     } else {
-      // 타이머가 중지되면 애니메이션 중지
       pulseAnim.setValue(1);
       pulseAnim.stopAnimation();
     }
   }, [isRunning]);
 
+  // 캐릭터 클릭 핸들러
+  const handleCharacterPress = () => {
+    if (isRunning) {
+      return;
+    }
+
+    setResultState(null);
+    setCharacterState("normal");
+  };
+
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          transform: [{ scale: pulseAnim }],
-        },
-      ]}
+    <TouchableOpacity
+      activeOpacity={isRunning ? 1 : 0.6}
+      onPress={handleCharacterPress}
+      disabled={isRunning}
     >
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#636B2F" />
-      ) : (
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: imageUrls[characterState] || "" }}
-            style={styles.image}
-            resizeMode="contain"
-            defaultSource={require("../../../assets/images/pooping-cat.png")} // 로드 실패 시 기본 이미지
-          />
-        </View>
-      )}
-    </Animated.View>
+      <Animated.View
+        style={[
+          styles.container,
+          {
+            transform: [{ scale: pulseAnim }],
+          },
+        ]}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#636B2F" />
+        ) : (
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: imageUrls[characterState] || "" }}
+              style={styles.image}
+              resizeMode="contain"
+              defaultSource={require("../../../assets/images/pooping-cat.png")}
+            />
+          </View>
+        )}
+      </Animated.View>
+    </TouchableOpacity>
   );
 };
 
