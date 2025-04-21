@@ -1,51 +1,214 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Text, ScrollView, Image } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
-import { StyledView, StyledText, StyledScrollView } from "../../utils/styled";
+import { Ionicons } from "@expo/vector-icons";
 
 export const StoreScreen: React.FC = () => {
   const { isDark } = useThemeStore();
 
-  return (
-    <StyledScrollView
-      className={`flex-1 p-4 ${
-        isDark ? "bg-mossy-darkest" : "bg-mossy-lightest"
-      }`}
-    >
-      <StyledText
-        className={`text-2xl font-bold mb-6 ${
-          isDark ? "text-white" : "text-mossy-darkest"
-        }`}
-        style={{ fontFamily: "Pattaya" }}
-      >
-        Store
-      </StyledText>
+  // 가상의 스토어 아이템들
+  const storeItems = [
+    {
+      id: 1,
+      name: "프리미엄 테마",
+      description: "다양한 고급 테마를 적용할 수 있습니다",
+      price: "준비 중",
+      icon: "color-palette-outline",
+    },
+    {
+      id: 2,
+      name: "캐릭터 스킨",
+      description: "귀여운 캐릭터 스킨을 추가로 구매하세요",
+      price: "준비 중",
+      icon: "person-outline",
+    },
+    {
+      id: 3,
+      name: "스페셜 이펙트",
+      description: "특별한 애니메이션 효과를 적용할 수 있습니다",
+      price: "준비 중",
+      icon: "sparkles-outline",
+    },
+  ];
 
-      <StyledView
-        className={`rounded-lg p-4 mb-4 ${
-          isDark ? "bg-mossy-dark/40" : "bg-mossy-light/40"
-        }`}
+  return (
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#1A1A1A" : "#FFFFFF" },
+      ]}
+    >
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: isDark ? "#FFFFFF" : "#000000" }]}>
+          상점
+        </Text>
+        <Text
+          style={[styles.subtitle, { color: isDark ? "#BBBBBB" : "#666666" }]}
+        >
+          다양한 아이템으로 앱을 꾸며보세요
+        </Text>
+      </View>
+
+      {/* 준비 중 메시지 */}
+      <View
+        style={[
+          styles.comingSoonCard,
+          { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+        ]}
       >
-        <StyledText
-          className={`text-lg font-bold mb-3 ${
-            isDark ? "text-white" : "text-mossy-darkest"
-          }`}
+        <Ionicons
+          name="time-outline"
+          size={28}
+          color={isDark ? "#BBBBBB" : "#636B2F"}
+          style={styles.comingSoonIcon}
+        />
+        <Text
+          style={[
+            styles.comingSoonTitle,
+            { color: isDark ? "#FFFFFF" : "#000000" },
+          ]}
         >
           준비 중인 기능입니다
-        </StyledText>
-        <StyledText
-          className={`${isDark ? "text-gray-300" : "text-mossy-dark"}`}
+        </Text>
+        <Text
+          style={[
+            styles.comingSoonText,
+            { color: isDark ? "#BBBBBB" : "#666666" },
+          ]}
         >
           곧 다양한 아이템과 테마가 제공될 예정입니다. 조금만 기다려주세요!
-        </StyledText>
-      </StyledView>
-    </StyledScrollView>
+        </Text>
+      </View>
+
+      {/* 향후 제공될 아이템 미리보기 */}
+      <Text
+        style={[styles.sectionTitle, { color: isDark ? "#FFFFFF" : "#000000" }]}
+      >
+        출시 예정 아이템
+      </Text>
+
+      {storeItems.map((item) => (
+        <View
+          key={item.id}
+          style={[
+            styles.itemCard,
+            { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+          ]}
+        >
+          <View style={styles.itemIconContainer}>
+            <Ionicons
+              name={item.icon}
+              size={32}
+              color="#636B2F"
+              style={styles.itemIcon}
+            />
+          </View>
+          <View style={styles.itemInfo}>
+            <Text
+              style={[
+                styles.itemName,
+                { color: isDark ? "#FFFFFF" : "#000000" },
+              ]}
+            >
+              {item.name}
+            </Text>
+            <Text
+              style={[
+                styles.itemDescription,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
+              {item.description}
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.itemPrice,
+              { color: isDark ? "#FFFFFF" : "#636B2F" },
+            ]}
+          >
+            {item.price}
+          </Text>
+        </View>
+      ))}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 20,
+  },
+  header: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 8,
+    fontFamily: "Pattaya",
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  comingSoonCard: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    alignItems: "center",
+  },
+  comingSoonIcon: {
+    marginBottom: 12,
+  },
+  comingSoonTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  comingSoonText: {
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 16,
+  },
+  itemCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
     padding: 16,
+    marginBottom: 12,
+  },
+  itemIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(99, 107, 47, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  itemIcon: {},
+  itemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  itemDescription: {
+    fontSize: 14,
+  },
+  itemPrice: {
+    fontSize: 14,
+    fontWeight: "bold",
   },
 });

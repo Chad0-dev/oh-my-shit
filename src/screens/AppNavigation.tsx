@@ -24,6 +24,7 @@ export type HamburgerScreenType =
   | "profile"
   | "settings"
   | "notifications"
+  | "home"
   | null;
 
 export const AppNavigation: React.FC = () => {

@@ -6,8 +6,10 @@ import {
   StyleSheet,
   Modal,
   Animated,
+  Image,
 } from "react-native";
 import { useAuthStore } from "../../stores/authStore";
+import { useProfileStore } from "../../stores/profileStore";
 import { MenuItem } from "./MenuItem";
 import { HamburgerScreenType } from "../../screens/AppNavigation";
 
@@ -23,6 +25,7 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({
   onNavigate,
 }) => {
   const { user, signOut } = useAuthStore();
+  const { avatarUrl, nickname } = useProfileStore();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const isClosing = useRef(false);
@@ -170,11 +173,34 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({
         >
           {/* 헤더 */}
           <View style={styles.header}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>
-                {user?.email ? user.email.charAt(0).toUpperCase() : "U"}
-              </Text>
+            <View
+              style={[
+                styles.avatarCircle,
+                {
+                  // 테두리 얇게 수정
+                  borderWidth: avatarUrl ? 1.5 : 0,
+                  borderColor: "white",
+                },
+              ]}
+            >
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    borderWidth: 0, // 이미지 내부 테두리 제거
+                  }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={styles.avatarText}>
+                  {user?.email ? user.email.charAt(0).toUpperCase() : "U"}
+                </Text>
+              )}
             </View>
+            <Text style={styles.profileName}>{nickname}</Text>
           </View>
 
           {/* 메뉴 아이템 */}
@@ -252,16 +278,23 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    overflow: "hidden",
   },
   avatarText: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#FFFFFF",
+  },
+  profileName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginTop: 4,
   },
   menuItems: {
     padding: 8,

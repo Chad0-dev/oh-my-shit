@@ -9,8 +9,9 @@ import {
   BackHandler,
 } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { HamburgerScreenType } from "../../screens/AppNavigation";
+import { MenuItem } from "./MenuItem";
 
 interface HamburgerMenuProps {
   visible: boolean;
@@ -100,6 +101,30 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
     }
   };
 
+  // 메뉴 아이템 정의
+  const menuItems = [
+    {
+      icon: "🛒",
+      label: "상점",
+      onPress: () => handleNavigation("store"),
+    },
+    {
+      icon: "📖",
+      label: "설명서",
+      onPress: () => handleNavigation("manual"),
+    },
+    {
+      icon: "❓",
+      label: "도움말",
+      onPress: () => handleNavigation("help"),
+    },
+    {
+      icon: "✉️",
+      label: "문의하기",
+      onPress: () => handleNavigation("contact"),
+    },
+  ];
+
   return (
     <Modal
       visible={visible}
@@ -118,7 +143,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           style={[
             styles.menuContainer,
             {
-              backgroundColor: "#FFFFFF",
+              backgroundColor: isDark ? "#333333" : "#FFFFFF",
               transform: [{ translateX: slideAnim }],
             },
           ]}
@@ -130,30 +155,18 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
             </TouchableOpacity>
           </View>
           <View style={styles.menuItems}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => handleNavigation("store")}
-            >
-              <Text style={styles.menuText}>상점</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => handleNavigation("manual")}
-            >
-              <Text style={styles.menuText}>설명서</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => handleNavigation("help")}
-            >
-              <Text style={styles.menuText}>도움말</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => handleNavigation("contact")}
-            >
-              <Text style={styles.menuText}>문의하기</Text>
-            </TouchableOpacity>
+            {menuItems.map((item, index) => (
+              <MenuItem
+                key={index}
+                icon={item.icon}
+                label={item.label}
+                onPress={item.onPress}
+                textStyle={{
+                  color: isDark ? "#FFFFFF" : "#333333",
+                  fontSize: 16,
+                }}
+              />
+            ))}
           </View>
         </Animated.View>
       </View>
@@ -183,6 +196,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 12,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    overflow: "hidden",
   },
   header: {
     flexDirection: "row",
@@ -202,15 +218,6 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   menuItems: {
-    padding: 16,
-  },
-  menuItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  menuText: {
-    fontSize: 16,
-    color: "#000000",
+    padding: 8,
   },
 });

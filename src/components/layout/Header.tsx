@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useRef } from "react";
-import { TouchableOpacity, StyleSheet, View, Text } from "react-native";
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { TouchableOpacity, StyleSheet, View, Text, Image } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
 import { StyledText, StyledView } from "../../utils/styled";
 import { useAuthStore } from "../../stores/authStore";
+import { useProfileStore } from "../../stores/profileStore";
 import { HamburgerMenu } from "../headers/HamburgerMenu";
 import { AvatarMenu } from "../headers/AvatarMenu";
 import { HamburgerScreenType } from "../../screens/AppNavigation";
@@ -12,6 +13,7 @@ interface HeaderProps {
   onMenuPress?: () => void;
   onAvatarPress?: () => void;
   onNavigateTo?: (screen: HamburgerScreenType) => void;
+  onTitlePress?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,12 +21,21 @@ export const Header: React.FC<HeaderProps> = ({
   onMenuPress,
   onAvatarPress,
   onNavigateTo,
+  onTitlePress,
 }) => {
   const { isDark } = useThemeStore();
   const { user } = useAuthStore();
+  const { avatarUrl, loadProfile } = useProfileStore();
   const [hamburgerMenuVisible, setHamburgerMenuVisible] = useState(false);
   const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
   const menuTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // 앱이 시작될 때 프로필 정보 로드
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user, loadProfile]);
 
   // 타임아웃 클리어 함수
   const clearMenuTimeout = useCallback(() => {
@@ -90,6 +101,31 @@ export const Header: React.FC<HeaderProps> = ({
     [onNavigateTo, handleHamburgerMenuClose]
   );
 
+  // 타이틀 클릭 핸들러
+  const handleTitlePress = useCallback(() => {
+    if (onTitlePress) {
+      onTitlePress();
+    } else if (onNavigateTo) {
+      // 햄버거 메뉴가 열려있으면 닫기
+      if (hamburgerMenuVisible) {
+        handleHamburgerMenuClose();
+      }
+      // 아바타 메뉴가 열려있으면 닫기
+      if (avatarMenuVisible) {
+        handleAvatarMenuClose();
+      }
+      // 홈 화면으로 이동
+      onNavigateTo("home");
+    }
+  }, [
+    onTitlePress,
+    onNavigateTo,
+    hamburgerMenuVisible,
+    avatarMenuVisible,
+    handleHamburgerMenuClose,
+    handleAvatarMenuClose,
+  ]);
+
   return (
     <>
       <View
@@ -111,17 +147,19 @@ export const Header: React.FC<HeaderProps> = ({
           <StyledView className="w-6 h-1 bg-white rounded"></StyledView>
         </TouchableOpacity>
 
-        {/* 타이틀 */}
-        <Text
-          style={{
-            color: "white",
-            fontSize: 28,
-            fontFamily: "Pattaya",
-            textAlign: "center",
-          }}
-        >
-          {title}
-        </Text>
+        {/* 타이틀 - 클릭 가능하도록 TouchableOpacity로 감싸기 */}
+        <TouchableOpacity onPress={handleTitlePress}>
+          <Text
+            style={{
+              color: "white",
+              fontSize: 28,
+              fontFamily: "Pattaya",
+              textAlign: "center",
+            }}
+          >
+            {title}
+          </Text>
+        </TouchableOpacity>
 
         {/* 아바타 메뉴 */}
         <TouchableOpacity
@@ -129,22 +167,43 @@ export const Header: React.FC<HeaderProps> = ({
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: "#BAC095",
+            backgroundColor: avatarUrl ? "transparent" : "#BAC095",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 10,
+            overflow: "hidden",
+            borderWidth: 1,
+            borderColor: "white",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 3,
+            elevation: 5,
           }}
           onPress={handleAvatarPress}
         >
-          <Text
-            style={{
-              color: "white",
-              fontSize: 18,
-              fontWeight: "bold",
-            }}
-          >
-            {userInitial}
-          </Text>
+          {avatarUrl ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                borderWidth: 0,
+              }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text
+              style={{
+                color: "white",
+                fontSize: 18,
+                fontWeight: "bold",
+              }}
+            >
+              {userInitial}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 

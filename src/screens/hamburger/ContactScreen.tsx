@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   StyleSheet,
   View,
+  Text,
   TextInput,
   TouchableOpacity,
   ScrollView,
@@ -11,7 +12,6 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
-import { StyledView, StyledText } from "../../utils/styled";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 
@@ -73,14 +73,10 @@ export const ContactScreen: React.FC = () => {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
-  const textColor = isDark ? "text-gray-200" : "text-mossy-darkest";
-  const sectionBg = isDark ? "bg-mossy-dark/40" : "bg-mossy-light/40";
-  const titleColor = isDark ? "text-white" : "text-mossy-darkest";
-  const iconColor = isDark ? "#BAC095" : "#636B2F";
-  const dividerColor = "#3D4127";
   const inputBg = isDark ? "#2A2A2A" : "#FFFFFF";
   const inputText = isDark ? "#FFFFFF" : "#333333";
   const placeholderColor = isDark ? "#777777" : "#999999";
+  const dividerColor = "#3D4127";
 
   // 대체 이메일 전송 방법 (mailto: 링크)
   const sendEmailViaMailto = () => {
@@ -186,81 +182,118 @@ export const ContactScreen: React.FC = () => {
       style={{ flex: 1 }}
     >
       <ScrollView
-        className={`flex-1 p-4 ${
-          isDark ? "bg-mossy-darkest" : "bg-mossy-lightest"
-        }`}
+        style={[
+          styles.container,
+          { backgroundColor: isDark ? "#1A1A1A" : "#FFFFFF" },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
-        <StyledText
-          className={`text-3xl font-bold ${titleColor} text-center mb-2`}
-          style={{ fontFamily: "Pattaya" }}
-        >
-          문의하기
-        </StyledText>
-        <StyledText className={`${textColor} text-center mb-6`}>
-          문의사항이나 제안을 남겨주세요
-        </StyledText>
+        {/* 헤더 */}
+        <View style={styles.header}>
+          <Text
+            style={[styles.title, { color: isDark ? "#FFFFFF" : "#000000" }]}
+          >
+            문의하기
+          </Text>
+          <Text
+            style={[styles.subtitle, { color: isDark ? "#BBBBBB" : "#666666" }]}
+          >
+            문의사항이나 제안을 남겨주세요
+          </Text>
+        </View>
 
         {/* 연락처 정보 섹션 */}
-        <StyledView
-          className={`rounded-lg p-4 mb-6 ${sectionBg}`}
-          style={styles.cardShadow}
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+          ]}
         >
-          <StyledView className="flex-row items-center mb-3">
-            <Ionicons name="call-outline" size={24} color={iconColor} />
-            <StyledText className={`text-lg font-bold ml-2 ${titleColor}`}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="call-outline" size={24} color="#636B2F" />
+            <Text
+              style={[
+                styles.cardTitle,
+                { color: isDark ? "#FFFFFF" : "#000000" },
+              ]}
+            >
               연락처 정보
-            </StyledText>
-          </StyledView>
-          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+            </Text>
+          </View>
 
-          <StyledView className="mt-4">
+          <View style={styles.contactMethodsContainer}>
             {contactMethods.map((method, index) => (
               <TouchableOpacity
                 key={index}
                 onPress={method.action}
-                className="flex-row items-center mb-3"
+                style={styles.contactMethodItem}
               >
-                <Ionicons name={method.icon} size={20} color={iconColor} />
-                <StyledText className={`${textColor} font-bold ml-2 mr-1`}>
+                <Ionicons name={method.icon} size={20} color="#636B2F" />
+                <Text
+                  style={[
+                    styles.contactMethodLabel,
+                    { color: isDark ? "#FFFFFF" : "#000000" },
+                  ]}
+                >
                   {method.label}:
-                </StyledText>
-                <StyledText className={`${textColor} underline`}>
+                </Text>
+                <Text
+                  style={[
+                    styles.contactMethodValue,
+                    { color: isDark ? "#BBBBBB" : "#666666" },
+                  ]}
+                >
                   {method.value}
-                </StyledText>
+                </Text>
               </TouchableOpacity>
             ))}
-            <StyledText className={`${textColor} mt-2 italic`}>
+            <Text
+              style={[
+                styles.supportHours,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
               평일 오전 9시부터 오후 6시까지 응답 가능합니다.
-            </StyledText>
-          </StyledView>
-        </StyledView>
+            </Text>
+          </View>
+        </View>
 
         {/* 문의 양식 섹션 */}
-        <StyledView
-          className={`rounded-lg p-4 mb-6 ${sectionBg}`}
-          style={styles.cardShadow}
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+          ]}
         >
-          <StyledView className="flex-row items-center mb-3">
-            <Ionicons name="create-outline" size={24} color={iconColor} />
-            <StyledText className={`text-lg font-bold ml-2 ${titleColor}`}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="create-outline" size={24} color="#636B2F" />
+            <Text
+              style={[
+                styles.cardTitle,
+                { color: isDark ? "#FFFFFF" : "#000000" },
+              ]}
+            >
               문의 양식
-            </StyledText>
-          </StyledView>
-          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+            </Text>
+          </View>
 
-          <StyledView className="mt-4">
-            <StyledView className="mb-3">
-              <StyledText className={`${textColor} mb-1`}>
+          <View style={styles.formContainer}>
+            <View style={styles.formField}>
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: isDark ? "#BBBBBB" : "#666666" },
+                ]}
+              >
                 이름 (선택사항)
-              </StyledText>
+              </Text>
               <TextInput
                 style={[
                   styles.input,
                   {
                     backgroundColor: inputBg,
                     color: inputText,
-                    borderColor: dividerColor,
+                    borderColor: isDark ? "#444444" : "#DDDDDD",
                   },
                 ]}
                 value={name}
@@ -268,19 +301,24 @@ export const ContactScreen: React.FC = () => {
                 placeholder="이름을 입력하세요"
                 placeholderTextColor={placeholderColor}
               />
-            </StyledView>
+            </View>
 
-            <StyledView className="mb-3">
-              <StyledText className={`${textColor} mb-1`}>
+            <View style={styles.formField}>
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: isDark ? "#BBBBBB" : "#666666" },
+                ]}
+              >
                 이메일 (선택사항)
-              </StyledText>
+              </Text>
               <TextInput
                 style={[
                   styles.input,
                   {
                     backgroundColor: inputBg,
                     color: inputText,
-                    borderColor: dividerColor,
+                    borderColor: isDark ? "#444444" : "#DDDDDD",
                   },
                 ]}
                 value={email}
@@ -290,19 +328,24 @@ export const ContactScreen: React.FC = () => {
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
-            </StyledView>
+            </View>
 
-            <StyledView className="mb-3">
-              <StyledText className={`${textColor} mb-1`}>
+            <View style={styles.formField}>
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: isDark ? "#BBBBBB" : "#666666" },
+                ]}
+              >
                 제목 (선택사항)
-              </StyledText>
+              </Text>
               <TextInput
                 style={[
                   styles.input,
                   {
                     backgroundColor: inputBg,
                     color: inputText,
-                    borderColor: dividerColor,
+                    borderColor: isDark ? "#444444" : "#DDDDDD",
                   },
                 ]}
                 value={subject}
@@ -310,17 +353,24 @@ export const ContactScreen: React.FC = () => {
                 placeholder="문의 제목"
                 placeholderTextColor={placeholderColor}
               />
-            </StyledView>
+            </View>
 
-            <StyledView className="mb-4">
-              <StyledText className={`${textColor} mb-1`}>메시지 *</StyledText>
+            <View style={styles.formField}>
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  { color: isDark ? "#BBBBBB" : "#666666" },
+                ]}
+              >
+                메시지 *
+              </Text>
               <TextInput
                 style={[
                   styles.textArea,
                   {
                     backgroundColor: inputBg,
                     color: inputText,
-                    borderColor: dividerColor,
+                    borderColor: isDark ? "#444444" : "#DDDDDD",
                   },
                 ]}
                 value={message}
@@ -331,62 +381,122 @@ export const ContactScreen: React.FC = () => {
                 numberOfLines={5}
                 textAlignVertical="top"
               />
-            </StyledView>
+            </View>
 
             <TouchableOpacity
               onPress={handleSubmit}
-              style={[
-                styles.submitButton,
-                { backgroundColor: isDark ? "#636B2F" : "#BAC095" },
-              ]}
+              style={[styles.submitButton, { backgroundColor: "#636B2F" }]}
               activeOpacity={0.7}
             >
-              <StyledText
-                className="text-white font-bold text-center"
-                style={{ fontSize: 16 }}
-              >
-                메시지 보내기
-              </StyledText>
+              <Text style={styles.submitButtonText}>메시지 보내기</Text>
             </TouchableOpacity>
-          </StyledView>
-        </StyledView>
+          </View>
+        </View>
 
         {/* 이용 약관 및 개인정보 처리방침 */}
-        <StyledView className="items-center my-4">
-          <StyledText className={`${textColor} text-sm mb-1`}>
+        <View style={styles.footer}>
+          <Text
+            style={[
+              styles.footerText,
+              { color: isDark ? "#BBBBBB" : "#666666" },
+            ]}
+          >
             문의하시기 전에
-            <StyledText
-              className="underline"
+            <Text
+              style={styles.linkText}
               onPress={() =>
                 Linking.openURL("https://www.ohmyshit.app/privacy")
               }
             >
               {" "}
               개인정보 처리방침
-            </StyledText>
+            </Text>
             을 확인해 주세요.
-          </StyledText>
-          <StyledText className={`${textColor} text-sm`}>
+          </Text>
+          <Text
+            style={[
+              styles.footerText,
+              { color: isDark ? "#BBBBBB" : "#666666" },
+            ]}
+          >
             © 2024 Oh My Sh!t. All rights reserved.
-          </StyledText>
-        </StyledView>
+          </Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  cardShadow: {
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  header: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 8,
+    fontFamily: "Pattaya",
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  card: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  divider: {
-    height: 1,
-    width: "100%",
-    opacity: 0.7,
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 12,
+  },
+  contactMethodsContainer: {
+    marginTop: 8,
+  },
+  contactMethodItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  contactMethodLabel: {
+    fontWeight: "bold",
+    marginLeft: 8,
+    marginRight: 4,
+  },
+  contactMethodValue: {
+    textDecorationLine: "underline",
+  },
+  supportHours: {
+    marginTop: 8,
+    fontStyle: "italic",
+    fontSize: 14,
+  },
+  formContainer: {
+    marginTop: 8,
+  },
+  formField: {
+    marginBottom: 16,
+  },
+  fieldLabel: {
+    marginBottom: 6,
+    fontSize: 15,
   },
   input: {
     height: 46,
@@ -407,5 +517,24 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 8,
     marginTop: 8,
+  },
+  submitButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 16,
+  },
+  footer: {
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  footerText: {
+    fontSize: 14,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  linkText: {
+    textDecorationLine: "underline",
   },
 });

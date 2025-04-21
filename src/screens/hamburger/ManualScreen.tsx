@@ -1,7 +1,6 @@
 import React from "react";
-import { StyleSheet, View, Image } from "react-native";
+import { StyleSheet, View, Text, ScrollView } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
-import { StyledView, StyledText, StyledScrollView } from "../../utils/styled";
 import { Ionicons } from "@expo/vector-icons";
 
 // 아이콘 타입을 명시적으로 지정
@@ -9,12 +8,6 @@ type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
 export const ManualScreen: React.FC = () => {
   const { isDark } = useThemeStore();
-
-  const textColor = isDark ? "text-gray-200" : "text-mossy-darkest";
-  const sectionBg = isDark ? "bg-mossy-dark/40" : "bg-mossy-light/40";
-  const titleColor = isDark ? "text-white" : "text-mossy-darkest";
-  const iconColor = isDark ? "#BAC095" : "#636B2F";
-  const dividerColor = "#3D4127";
 
   // 기능별 매뉴얼 항목
   const manualSections = [
@@ -66,99 +59,251 @@ export const ManualScreen: React.FC = () => {
   ];
 
   return (
-    <StyledScrollView
-      className={`flex-1 p-4 ${
-        isDark ? "bg-mossy-darkest" : "bg-mossy-lightest"
-      }`}
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#1A1A1A" : "#FFFFFF" },
+      ]}
     >
-      <StyledView
-        className={`rounded-lg p-4 mb-6 ${sectionBg}`}
-        style={styles.cardShadow}
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: isDark ? "#FFFFFF" : "#000000" }]}>
+          설명서
+        </Text>
+        <Text
+          style={[styles.subtitle, { color: isDark ? "#BBBBBB" : "#666666" }]}
+        >
+          앱 기능 사용 방법 안내
+        </Text>
+      </View>
+
+      {/* 앱 소개 */}
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+        ]}
       >
-        <StyledText className={`text-lg font-bold mb-3 ${titleColor}`}>
-          앱 소개
-        </StyledText>
-        <View style={[styles.divider, { backgroundColor: dividerColor }]} />
-        <StyledText className={`${textColor} mt-4 mb-3 leading-6`}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="information-circle" size={24} color="#636B2F" />
+          <Text
+            style={[
+              styles.cardTitle,
+              { color: isDark ? "#FFFFFF" : "#000000" },
+            ]}
+          >
+            앱 소개
+          </Text>
+        </View>
+        <Text
+          style={[styles.cardText, { color: isDark ? "#BBBBBB" : "#666666" }]}
+        >
           Oh My Sh!t 앱은 당신의 배변 활동을 기록하고 건강 상태를 모니터링하여
           더 건강한 생활 습관을 형성하도록 도와주는 앱입니다. 일상적인 배변
           활동을 추적하고, 관련 건강 정보를 확인하세요.
-        </StyledText>
-      </StyledView>
+        </Text>
+      </View>
 
+      {/* 기능별 매뉴얼 섹션 */}
       {manualSections.map((section, index) => (
-        <StyledView
+        <View
           key={index}
-          className={`rounded-lg p-4 mb-4 ${sectionBg}`}
-          style={styles.cardShadow}
+          style={[
+            styles.card,
+            { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+          ]}
         >
-          <StyledView className="flex-row items-center mb-3">
-            <Ionicons name={section.icon} size={24} color={iconColor} />
-            <StyledText className={`text-lg font-bold ml-2 ${titleColor}`}>
+          <View style={styles.cardHeader}>
+            <Ionicons name={section.icon} size={24} color="#636B2F" />
+            <Text
+              style={[
+                styles.cardTitle,
+                { color: isDark ? "#FFFFFF" : "#000000" },
+              ]}
+            >
               {section.title}
-            </StyledText>
-          </StyledView>
-          <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+            </Text>
+          </View>
 
-          <StyledView className="mt-3">
+          <View style={styles.itemsContainer}>
             {section.items.map((item, idx) => (
-              <StyledView key={idx} className="flex-row mb-2 items-start">
-                <StyledText className={`${textColor} mr-2`}>•</StyledText>
-                <StyledText className={`${textColor} flex-1`}>
+              <View key={idx} style={styles.itemRow}>
+                <Text
+                  style={[
+                    styles.bulletPoint,
+                    { color: isDark ? "#BBBBBB" : "#666666" },
+                  ]}
+                >
+                  •
+                </Text>
+                <Text
+                  style={[
+                    styles.itemText,
+                    { color: isDark ? "#BBBBBB" : "#666666" },
+                  ]}
+                >
                   {item}
-                </StyledText>
-              </StyledView>
+                </Text>
+              </View>
             ))}
-          </StyledView>
-        </StyledView>
+          </View>
+        </View>
       ))}
 
-      <StyledView
-        className={`rounded-lg p-4 mb-4 ${sectionBg}`}
-        style={styles.cardShadow}
+      {/* 도움말 */}
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+        ]}
       >
-        <StyledText className={`text-lg font-bold mb-3 ${titleColor}`}>
-          도움말
-        </StyledText>
-        <View style={[styles.divider, { backgroundColor: dividerColor }]} />
-        <StyledView className="mt-3">
-          <StyledText className={`${textColor} mb-2`}>
-            • 앱 사용 중 문제가 발생하면 설정 &gt; 도움말 메뉴를 참고하세요.
-          </StyledText>
-          <StyledText className={`${textColor} mb-2`}>
-            • 건강 정보는 참고용이며, 전문적인 의료 조언을 대체할 수 없습니다.
-          </StyledText>
-          <StyledText className={`${textColor}`}>
-            • 개인정보는 안전하게 보호되며, 사용자 동의 없이 외부로 공유되지
-            않습니다.
-          </StyledText>
-        </StyledView>
-      </StyledView>
+        <View style={styles.cardHeader}>
+          <Ionicons name="help-circle" size={24} color="#636B2F" />
+          <Text
+            style={[
+              styles.cardTitle,
+              { color: isDark ? "#FFFFFF" : "#000000" },
+            ]}
+          >
+            도움말
+          </Text>
+        </View>
 
-      <StyledView className="items-center my-4">
-        <StyledText className={`${textColor} text-sm`}>
+        <View style={styles.itemsContainer}>
+          <View style={styles.itemRow}>
+            <Text
+              style={[
+                styles.bulletPoint,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
+              •
+            </Text>
+            <Text
+              style={[
+                styles.itemText,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
+              앱 사용 중 문제가 발생하면 설정 &gt; 도움말 메뉴를 참고하세요.
+            </Text>
+          </View>
+          <View style={styles.itemRow}>
+            <Text
+              style={[
+                styles.bulletPoint,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
+              •
+            </Text>
+            <Text
+              style={[
+                styles.itemText,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
+              건강 정보는 참고용이며, 전문적인 의료 조언을 대체할 수 없습니다.
+            </Text>
+          </View>
+          <View style={styles.itemRow}>
+            <Text
+              style={[
+                styles.bulletPoint,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
+              •
+            </Text>
+            <Text
+              style={[
+                styles.itemText,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
+              개인정보는 안전하게 보호되며, 사용자 동의 없이 외부로 공유되지
+              않습니다.
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* 푸터 */}
+      <View style={styles.footer}>
+        <Text
+          style={[styles.footerText, { color: isDark ? "#BBBBBB" : "#666666" }]}
+        >
           © 2024 Oh My Sh!t. All rights reserved.
-        </StyledText>
-      </StyledView>
-    </StyledScrollView>
+        </Text>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 20,
   },
-  cardShadow: {
+  header: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 8,
+    fontFamily: "Pattaya",
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  card: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  divider: {
-    height: 1,
-    width: "100%",
-    opacity: 0.7,
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 12,
+  },
+  cardText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  itemsContainer: {
+    marginTop: 12,
+  },
+  itemRow: {
+    flexDirection: "row",
+    marginBottom: 10,
+    alignItems: "flex-start",
+  },
+  bulletPoint: {
+    marginRight: 8,
+    fontSize: 16,
+  },
+  itemText: {
+    fontSize: 14,
+    lineHeight: 20,
+    flex: 1,
+  },
+  footer: {
+    alignItems: "center",
+    marginVertical: 16,
+  },
+  footerText: {
+    fontSize: 14,
   },
 });

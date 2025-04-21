@@ -39,6 +39,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     }
   };
 
+  // 타이틀 클릭 시 홈으로 이동하는 핸들러
+  const handleTitlePress = () => {
+    if (onNavigateTo) {
+      // 현재 화면이 홈이 아니거나 햄버거 메뉴 화면이 열려있으면 홈으로 이동
+      if (activeTab !== "home" || currentScreen !== null) {
+        onTabChange("home");
+        onNavigateTo(null); // 현재 화면 초기화
+      }
+    }
+  };
+
   return (
     <View
       style={{
@@ -52,7 +63,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         backgroundColor={isDark ? "#636B2F" : "#D4DE95"}
       />
 
-      <Header title={title} onNavigateTo={handleNavigateTo} />
+      <Header
+        title={title}
+        onNavigateTo={handleNavigateTo}
+        onTitlePress={handleTitlePress}
+      />
 
       <StyledView className="flex-1">{children}</StyledView>
 

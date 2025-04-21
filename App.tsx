@@ -4,6 +4,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
 import { useThemeStore } from "./src/stores/themeStore";
 import { useAuthStore } from "./src/stores/authStore";
+import { useProfileStore } from "./src/stores/profileStore";
 import { LoginScreen } from "./src/screens/auth/LoginScreen";
 import { SignUpScreen } from "./src/screens/auth/SignUpScreen";
 import { Loading } from "./src/components/feedback/Loading";
@@ -14,6 +15,7 @@ export default function App() {
   const colorScheme = useColorScheme();
   const { applySystemTheme } = useThemeStore();
   const { user, isLoading, error } = useAuthStore();
+  const { loadProfile } = useProfileStore();
   const [isLoginScreen, setIsLoginScreen] = useState(true);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
@@ -32,6 +34,13 @@ export default function App() {
   useEffect(() => {
     applySystemTheme(colorScheme === "dark");
   }, [colorScheme, applySystemTheme]);
+
+  // 로그인 상태 변경 시 프로필 정보 로드
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user, loadProfile]);
 
   // 폰트 로딩 중이거나 인증 로딩 중일 때 로딩 표시
   if (!fontsLoaded || isLoading) {
