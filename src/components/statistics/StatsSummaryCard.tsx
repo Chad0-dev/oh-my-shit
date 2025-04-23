@@ -28,6 +28,7 @@ export const StatsSummaryCard: React.FC<StatsSummaryCardProps> = ({
     averageDuration,
     dailyAverage,
     abnormalCount,
+    successRate,
   } = summary;
 
   // 데이터가 없는 경우
@@ -120,7 +121,7 @@ export const StatsSummaryCard: React.FC<StatsSummaryCardProps> = ({
               }`}
               numberOfLines={1}
             >
-              평균
+              성공률
             </StyledText>
             <StyledText
               className={`text-sm font-bold mt-1 ${
@@ -128,7 +129,7 @@ export const StatsSummaryCard: React.FC<StatsSummaryCardProps> = ({
               }`}
               numberOfLines={1}
             >
-              {formatDuration(averageDuration || 0)}
+              {Math.round(successRate)}%
             </StyledText>
           </StyledView>
 

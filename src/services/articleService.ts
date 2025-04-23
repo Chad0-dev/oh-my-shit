@@ -121,6 +121,8 @@ export const getHealthArticlesPaginated = async (
       return { articles: null, hasMore: false, total: 0 };
     }
 
+    console.log("Supabase에서 받은 원본 데이터:", data); // 원본 데이터 로그
+
     const articles = data.map((article: HealthArticleRecord) => ({
       id: article.id,
       keyword: article.keyword,
@@ -130,6 +132,8 @@ export const getHealthArticlesPaginated = async (
       views: article.views,
       source: article.source,
     }));
+
+    console.log("변환된 게시물 첫번째 항목:", articles[0]); // 변환된 게시물 첫 번째 항목 확인
 
     // 더 많은 데이터가 있는지 확인
     const hasMore = count !== null ? from + pageSize < count : false;

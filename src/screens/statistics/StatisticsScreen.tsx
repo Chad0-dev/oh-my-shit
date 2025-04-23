@@ -22,6 +22,17 @@ import { StatsBarChart } from "../../components/statistics/StatsBarChart";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Polyline, Path } from "react-native-svg";
 
+// 초 단위 시간을 "분 초" 형식으로 변환하는 함수를 컴포넌트 바깥으로 이동
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+
+  if (minutes > 0) {
+    return `${minutes}분 ${remainingSeconds}초`;
+  }
+  return `${seconds}초`;
+}
+
 interface PeriodOption {
   label: string;
   days: number;
@@ -254,6 +265,16 @@ export const StatisticsScreen = () => {
     return labels;
   };
 
+  const {
+    totalCount,
+    successCount,
+    failureCount,
+    successRate,
+    averageDuration,
+    dailyAverage,
+    abnormalCount,
+  } = summary;
+
   return (
     <StyledScrollView
       className={`flex-1 p-4 ${
@@ -363,7 +384,7 @@ export const StatisticsScreen = () => {
                 {selectedPeriod.label} Records
               </StyledText>
 
-              {summary.totalCount === 0 ? (
+              {totalCount === 0 ? (
                 <StyledView className="items-center justify-center flex-1">
                   <StyledText
                     className={`text-center ${
@@ -375,84 +396,105 @@ export const StatisticsScreen = () => {
                 </StyledView>
               ) : (
                 <StyledView className="flex-1 justify-center">
-                  {/* 바 차트 */}
-                  <StyledView className="h-12 mb-3 bg-gray-200 rounded-lg overflow-hidden flex-row">
-                    {/* 성공 바 */}
-                    {summary.successCount > 0 && (
+                  {/* 슬라이더 */}
+                  <StyledView className="h-16 relative mb-3">
+                    {/* 배경 바 */}
+                    <StyledView
+                      className="h-8 rounded-full overflow-hidden flex-row"
+                      style={{
+                        backgroundColor: isDark ? "#333" : "#f0f0f0",
+                        borderWidth: 1,
+                        borderColor: isDark ? "#666" : "#ccc",
+                        marginTop: 12, // 마커 여유 공간 확보
+                      }}
+                    >
+                      {/* 왼쪽 영역 (좋음) */}
                       <StyledView
                         style={{
-                          width: `${
-                            (summary.successCount / summary.totalCount) * 100
-                          }%`,
-                          backgroundColor: isDark ? "#4CAF50" : "#81C784",
+                          width: "50%",
+                          backgroundColor: isDark ? "#388E3C" : "#C8E6C9", // 녹색 계열
                         }}
-                        className="justify-center px-2"
-                      >
-                        {summary.successCount >= summary.totalCount * 0.2 && (
-                          <StyledText
-                            className="text-white font-bold text-center"
-                            numberOfLines={1}
-                          >
-                            {Math.round(
-                              (summary.successCount / summary.totalCount) * 100
-                            )}
-                            %
-                          </StyledText>
-                        )}
-                      </StyledView>
-                    )}
+                      />
+                      {/* 오른쪽 영역 (나쁨) */}
+                      <StyledView
+                        style={{
+                          width: "50%",
+                          backgroundColor: isDark ? "#d32f2f" : "#FFCDD2", // 빨간색 계열
+                        }}
+                      />
+                    </StyledView>
 
-                    {/* 실패 바 */}
-                    {summary.failureCount > 0 && (
-                      <StyledView
-                        style={{
-                          width: `${
-                            (summary.failureCount / summary.totalCount) * 100
-                          }%`,
-                          backgroundColor: isDark ? "#F44336" : "#E57373",
-                        }}
-                        className="justify-center px-2"
-                      >
-                        {/* 실패 그래프 텍스트 삭제 */}
-                      </StyledView>
-                    )}
+                    {/* 평균 4분 텍스트 */}
+                    <StyledText
+                      style={{
+                        position: "absolute",
+                        left: "50%",
+                        top: -2,
+                        marginLeft: -25, // 중앙 정렬 보정
+                        fontSize: 10,
+                        color: isDark ? "#aaa" : "#666",
+                        width: 50,
+                        textAlign: "center",
+                      }}
+                    >
+                      평균 4분
+                    </StyledText>
+
+                    {/* 내 마커 */}
+                    <StyledView
+                      style={{
+                        position: "absolute",
+                        // 240초(4분)를 기준으로 최소 5%, 최대 95%로 제한
+                        // 0초면 0%, 480초(8분)면 100%로 계산하되 5~95% 사이로 제한
+                        left: `${Math.max(
+                          5,
+                          Math.min(95, ((averageDuration || 0) / 480) * 100)
+                        )}%`,
+                        top: 6,
+                        width: 20,
+                        height: 20,
+                        borderRadius: 10,
+                        backgroundColor:
+                          (averageDuration || 0) < 240
+                            ? isDark
+                              ? "#4CAF50"
+                              : "#81C784" // 빠름 (녹색)
+                            : isDark
+                            ? "#F44336"
+                            : "#E57373", // 느림 (빨강)
+                        borderWidth: 2,
+                        borderColor: isDark ? "#FFF" : "#000",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        marginLeft: -10, // 가운데 정렬 보정
+                      }}
+                    />
                   </StyledView>
 
-                  {/* 범례 */}
-                  <StyledView className="flex-row justify-around my-2">
-                    {/* 성공 범례 */}
-                    <StyledView className="flex-row items-center">
-                      <StyledView
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{
-                          backgroundColor: isDark ? "#4CAF50" : "#81C784",
-                        }}
-                      />
-                      <StyledText
-                        className={`text-sm ${
-                          isDark ? "text-gray-300" : "text-mossy-dark"
-                        }`}
-                      >
-                        성공: {summary.successCount}회
-                      </StyledText>
-                    </StyledView>
-
-                    {/* 실패 범례 */}
-                    <StyledView className="flex-row items-center">
-                      <StyledView
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{
-                          backgroundColor: isDark ? "#F44336" : "#E57373",
-                        }}
-                      />
-                      <StyledText
-                        className={`text-sm ${
-                          isDark ? "text-gray-300" : "text-mossy-dark"
-                        }`}
-                      >
-                        실패: {summary.failureCount}회
-                      </StyledText>
-                    </StyledView>
+                  {/* 결과 텍스트 */}
+                  <StyledView className="mt-2 items-center">
+                    <StyledText
+                      className={`text-base font-bold ${
+                        (averageDuration || 0) < 240
+                          ? isDark
+                            ? "text-green-400"
+                            : "text-green-600"
+                          : isDark
+                          ? "text-red-400"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {(averageDuration || 0) < 240
+                        ? "정상보다 빠른 배변 속도!"
+                        : "정상보다 느린 배변 속도"}
+                    </StyledText>
+                    <StyledText
+                      className={`text-sm mt-1 ${
+                        isDark ? "text-gray-300" : "text-gray-600"
+                      }`}
+                    >
+                      평균 소요 시간: {formatDuration(averageDuration || 0)}
+                    </StyledText>
                   </StyledView>
                 </StyledView>
               )}

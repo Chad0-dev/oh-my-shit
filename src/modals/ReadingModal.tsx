@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,22 +7,63 @@ import {
   Modal,
   TouchableWithoutFeedback,
   Animated,
+  Image,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeStore } from "../stores/themeStore";
 
 interface ReadingModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
+// 광고 이미지 목록
+const ADVERTISEMENT_IMAGES = [
+  {
+    id: 1,
+    url: "https://placehold.co/600x400/A6BF4F/FFFFFF/png?text=건강한+배변+활동을+위한+식습관",
+    title: "건강한 배변 활동을 위한 식습관",
+  },
+  {
+    id: 2,
+    url: "https://placehold.co/600x400/BAC095/333333/png?text=올바른+화장실+자세",
+    title: "올바른 화장실 자세 가이드",
+  },
+  {
+    id: 3,
+    url: "https://placehold.co/600x400/738C22/FFFFFF/png?text=식이섬유+풍부한+음식+추천",
+    title: "식이섬유 풍부한 음식 추천",
+  },
+  {
+    id: 4,
+    url: "https://placehold.co/600x400/94A53C/FFFFFF/png?text=장건강에+좋은+음식",
+    title: "장건강에 좋은 음식",
+  },
+  {
+    id: 5,
+    url: "https://placehold.co/600x400/D4DE95/333333/png?text=하루+2리터+물+마시기",
+    title: "하루 2리터 물 마시기",
+  },
+];
+
 export const ReadingModal: React.FC<ReadingModalProps> = ({
   visible,
   onClose,
 }) => {
+  const { isDark } = useThemeStore();
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const isClosing = useRef(false);
   const mountedRef = useRef(true);
+
+  const { width } = Dimensions.get("window");
+  const imageWidth = width * 0.85; // 모달 너비의 95%
+
+  // 광고 이미지
+  const advertisements = ADVERTISEMENT_IMAGES;
 
   // 컴포넌트 마운트/언마운트 관리
   useEffect(() => {
@@ -31,6 +72,15 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({
       mountedRef.current = false;
     };
   }, []);
+
+  // 모달이 열릴 때 랜덤 이미지 선택
+  useEffect(() => {
+    if (visible) {
+      // 랜덤 인덱스 선택
+      const randomIndex = Math.floor(Math.random() * advertisements.length);
+      setCurrentIndex(randomIndex);
+    }
+  }, [visible]);
 
   // 애니메이션 처리
   useEffect(() => {
@@ -90,6 +140,23 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({
     });
   };
 
+  // 이전 이미지로 이동
+  const handlePrevImage = () => {
+    setCurrentIndex((prev) =>
+      prev === 0 ? advertisements.length - 1 : prev - 1
+    );
+  };
+
+  // 다음 이미지로 이동
+  const handleNextImage = () => {
+    setCurrentIndex((prev) =>
+      prev === advertisements.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  // 현재 표시중인 광고
+  const currentAd = advertisements[currentIndex];
+
   return (
     <Modal
       visible={visible}
@@ -109,25 +176,93 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({
             {
               opacity: fadeAnim,
               transform: [{ scale: scaleAnim }],
+              backgroundColor: isDark ? "#2A2A2A" : "#FFFFFF",
             },
           ]}
         >
           <View style={styles.headerRow}>
-            <Text style={styles.modalTitle}>읽을거리</Text>
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: isDark ? "#BAC095" : "#636B2F" },
+              ]}
+            >
+              읽을거리
+            </Text>
             <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close" size={24} color="#636B2F" />
+              <Ionicons
+                name="close"
+                size={24}
+                color={isDark ? "#BAC095" : "#636B2F"}
+              />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.modalText}>
-            뽀모도로 기법은 1980년대 후반 프란체스코 시릴로가 개발한 시간 관리
-            방법론입니다. 25분 작업 후 5분 휴식을 반복하는 방식으로, 집중력과
-            생산성을 높이는데 효과적입니다.
-          </Text>
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: currentAd.url }}
+              style={[styles.adImage, { width: imageWidth }]}
+              resizeMode="contain"
+            />
 
-          <TouchableOpacity style={styles.modalButton} onPress={handleClose}>
-            <Text style={styles.modalButtonText}>닫기</Text>
-          </TouchableOpacity>
+            <Text
+              style={[
+                styles.imageTitle,
+                { color: isDark ? "#FFFFFF" : "#000000" },
+              ]}
+            >
+              {currentAd.title}
+            </Text>
+          </View>
+
+          <View style={styles.navigationContainer}>
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={handlePrevImage}
+            >
+              <Ionicons
+                name="chevron-back"
+                size={24}
+                color={isDark ? "#BAC095" : "#636B2F"}
+              />
+              <Text
+                style={[
+                  styles.navButtonText,
+                  { color: isDark ? "#BAC095" : "#636B2F" },
+                ]}
+              >
+                이전
+              </Text>
+            </TouchableOpacity>
+
+            <Text
+              style={[
+                styles.pageIndicator,
+                { color: isDark ? "#CCCCCC" : "#666666" },
+              ]}
+            >
+              {currentIndex + 1} / {advertisements.length}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={handleNextImage}
+            >
+              <Text
+                style={[
+                  styles.navButtonText,
+                  { color: isDark ? "#BAC095" : "#636B2F" },
+                ]}
+              >
+                다음
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={24}
+                color={isDark ? "#BAC095" : "#636B2F"}
+              />
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -149,8 +284,8 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   modalContent: {
-    width: "80%",
-    backgroundColor: "#FFFFFF",
+    width: "90%",
+    maxHeight: "80%",
     borderRadius: 12,
     padding: 20,
     alignItems: "center",
@@ -169,26 +304,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     marginBottom: 15,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(150, 150, 150, 0.2)",
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#636B2F",
   },
-  modalText: {
-    fontSize: 14,
-    marginBottom: 20,
-    textAlign: "center",
-    lineHeight: 20,
+  imageContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 20,
   },
-  modalButton: {
-    backgroundColor: "#636B2F",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  adImage: {
+    height: 300,
     borderRadius: 8,
   },
-  modalButtonText: {
-    color: "#FFFFFF",
+  imageTitle: {
+    marginTop: 12,
+    fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center",
+  },
+  navigationContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(150, 150, 150, 0.2)",
+    marginTop: 10,
+  },
+  navButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  navButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  pageIndicator: {
+    fontSize: 12,
   },
 });

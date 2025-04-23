@@ -28,7 +28,7 @@ export const Footer: React.FC<FooterProps> = ({ activeTab, onTabPress }) => {
   const renderIcon = (tabName: TabName, isActive: boolean) => {
     const iconColor =
       isActive || hoveredTab === tabName ? "#FFFFFF" : "#BAC095";
-    const iconSize = 24;
+    const iconSize = 28;
 
     // 각 탭에 맞는 아이콘 이름 매핑
     const getIconName = (tab: TabName, active: boolean): IconName => {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 20,
     borderTopWidth: 1,
     borderTopColor: "#BAC095",

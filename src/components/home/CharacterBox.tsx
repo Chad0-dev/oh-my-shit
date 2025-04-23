@@ -4,10 +4,10 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
-  Image,
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
+import { Image } from "expo-image";
 import { useTimerStore } from "../../stores/timerStore";
 import { supabase } from "../../supabase/client";
 
@@ -133,10 +133,11 @@ export const CharacterBox = () => {
         ) : (
           <View style={styles.imageContainer}>
             <Image
-              source={{ uri: imageUrls[characterState] || "" }}
+              source={imageUrls[characterState] || ""}
               style={styles.image}
-              resizeMode="contain"
-              defaultSource={require("../../../assets/images/pooping-cat.png")}
+              contentFit="contain"
+              cachePolicy="memory-disk"
+              transition={300}
             />
           </View>
         )}

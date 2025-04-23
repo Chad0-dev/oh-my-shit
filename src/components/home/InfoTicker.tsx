@@ -1,13 +1,30 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Animated, Dimensions } from "react-native";
-import { DEFAULT_INFO } from "../../data/constipationInfo";
+import { DEFAULT_INFO, getDefaultInfo } from "../../data/constipationInfo";
 import { useInfoTicker } from "../../hooks/useInfoTicker";
+import { useAuthStore } from "../../stores/authStore";
 
 const { width } = Dimensions.get("window");
 
 export const InfoTicker = () => {
+  const { user } = useAuthStore();
+  const [statusInfo, setStatusInfo] = useState(DEFAULT_INFO);
+
   // 커스텀 훅 사용
   const { currentInfo, translateX, opacity, isRunning } = useInfoTicker(width);
+
+  useEffect(() => {
+    const loadStatusInfo = async () => {
+      if (user?.id) {
+        const info = await getDefaultInfo(user.id);
+        setStatusInfo(info);
+      } else {
+        setStatusInfo(DEFAULT_INFO);
+      }
+    };
+
+    loadStatusInfo();
+  }, [user]);
 
   return (
     <View style={styles.container} testID="info-ticker-container">
@@ -15,7 +32,7 @@ export const InfoTicker = () => {
         {!isRunning ? (
           // 타이머 비활성화 상태 - 기본 문구 표시
           <Text style={styles.defaultText} numberOfLines={1}>
-            {DEFAULT_INFO}
+            {statusInfo}
           </Text>
         ) : (
           // 타이머 활성화 상태 - 정보 문구와 애니메이션 표시

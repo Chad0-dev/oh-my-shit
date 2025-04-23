@@ -6,8 +6,8 @@ import {
   StyleSheet,
   Modal,
   Animated,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { useAuthStore } from "../../stores/authStore";
 import { useProfileStore } from "../../stores/profileStore";
 import { MenuItem } from "./MenuItem";
@@ -185,14 +185,16 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({
             >
               {avatarUrl ? (
                 <Image
-                  source={{ uri: avatarUrl }}
+                  source={avatarUrl}
                   style={{
                     width: 60,
                     height: 60,
                     borderRadius: 30,
                     borderWidth: 0, // 이미지 내부 테두리 제거
                   }}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  transition={200}
                 />
               ) : (
                 <Text style={styles.avatarText}>

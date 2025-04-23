@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   TextInput,
   TouchableOpacity,
   Alert,
@@ -13,6 +12,7 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { Image } from "expo-image";
 import { useThemeStore } from "../../stores/themeStore";
 import { useAuthStore } from "../../stores/authStore";
 import { useProfileStore } from "../../stores/profileStore";
@@ -568,7 +568,13 @@ export const ProfileScreen: React.FC = () => {
               </Text>
             </View>
           ) : avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+            <Image
+              source={avatarUrl}
+              style={styles.avatar}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={300}
+            />
           ) : (
             <View
               style={[
@@ -792,12 +798,11 @@ export const ProfileScreen: React.FC = () => {
           ) : (
             <>
               <Image
-                source={{
-                  uri: getCharacterImageUrl(selectedCharacter) || undefined,
-                }}
+                source={getCharacterImageUrl(selectedCharacter) || undefined}
                 style={styles.characterPreview}
-                resizeMode="contain"
-                defaultSource={require("../../../assets/images/pooping-cat.png")}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+                transition={300}
               />
               <View style={styles.characterInfo}>
                 <Text
@@ -967,10 +972,11 @@ export const ProfileScreen: React.FC = () => {
                   onPress={() => selectCharacter(item.id)}
                 >
                   <Image
-                    source={{ uri: item.imageUrl || undefined }}
+                    source={item.imageUrl || ""}
                     style={styles.characterOptionImage}
-                    resizeMode="contain"
-                    defaultSource={require("../../../assets/images/pooping-cat.png")}
+                    contentFit="contain"
+                    cachePolicy="memory-disk"
+                    transition={200}
                   />
                   <Text
                     style={[

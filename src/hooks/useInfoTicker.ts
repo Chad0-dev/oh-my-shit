@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useTimerStore } from "../stores/timerStore";
-import { constipationInfos, DEFAULT_INFO } from "../data/constipationInfo";
+import { constipationInfos } from "../data/constipationInfo";
 import { getRandomIndex } from "../utils/randomUtils";
 import { useAnimatedTicker } from "./useAnimatedTicker";
+import { useAuthStore } from "../stores/authStore";
 
 export const useInfoTicker = (width: number) => {
   const { isRunning, resetSignal } = useTimerStore();
+  const { user } = useAuthStore();
   const [currentInfo, setCurrentInfo] = useState("");
   const appState = useRef(AppState.currentState);
 
@@ -178,7 +180,7 @@ export const useInfoTicker = (width: number) => {
   }, [resetSignal]);
 
   return {
-    currentInfo: currentInfo || DEFAULT_INFO, // 항상 정보가 있도록 보장
+    currentInfo: currentInfo || "", // 빈 문자열로 수정 (InfoTicker에서 statusInfo로 대체)
     translateX,
     opacity,
     isRunning,
