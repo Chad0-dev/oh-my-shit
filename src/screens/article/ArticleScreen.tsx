@@ -37,9 +37,7 @@ export const ArticleScreen: React.FC = () => {
     const verifySession = async () => {
       const hasSession = await checkSession();
       if (!hasSession) {
-        console.log(
-          "인증 세션이 없습니다. 로그인이 필요하지 않은 기능만 사용 가능합니다."
-        );
+        // 인증 세션이 없습니다. 로그인이 필요하지 않은 기능만 사용 가능합니다.
       }
     };
     verifySession();
@@ -100,7 +98,6 @@ export const ArticleScreen: React.FC = () => {
         }
       }
     } catch (error: any) {
-      console.error("게시물 로드 오류:", error);
       // 인증 오류일 경우 메시지 수정
       if (error.message?.includes("Invalid Refresh Token")) {
         Alert.alert("인증 오류", "세션이 만료되었습니다. 다시 로그인해주세요.");
@@ -142,7 +139,7 @@ export const ArticleScreen: React.FC = () => {
     try {
       await incrementArticleViews(article.id);
     } catch (error) {
-      console.error("조회수 증가 오류:", error);
+      // 오류 처리
     }
   };
 

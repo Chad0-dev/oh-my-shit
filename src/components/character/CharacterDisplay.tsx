@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Image,
@@ -7,13 +7,30 @@ import {
   Platform,
   ActivityIndicator,
   Text,
+  TouchableOpacity,
 } from "react-native";
 import { useCharacterStore } from "../../stores/characterStore";
+
+type CharacterStateType = "normal" | "pooping" | "success" | "fail";
 
 interface CharacterDisplayProps {
   size?: "small" | "medium" | "large";
   showState?: boolean;
+  forceLoad?: boolean; // 강제 로드 여부
 }
+
+// 디버깅용 상수
+const DEBUG = false;
+const LOADING_TIMEOUT = 5000; // 5초 후 로딩 타임아웃
+
+/**
+ * 디버깅 로그를 출력하는 함수
+ */
+const debugLog = (message: string, data?: any) => {
+  if (DEBUG) {
+    console.log(`[DEBUG:CharacterDisplay] ${message}`, data || "");
+  }
+};
 
 /**
  * 캐릭터 이미지를 표시하는 컴포넌트
@@ -23,10 +40,26 @@ interface CharacterDisplayProps {
 export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
   size = "medium",
   showState = false,
+  forceLoad = false,
 }) => {
   // 캐릭터 스토어에서 상태 및 이미지 URL 가져오기
-  const { currentState, imageUrls, isLoading, error, initializeImageUrls } =
-    useCharacterStore();
+  const {
+    currentState,
+    characterImages,
+    isLoading,
+    error,
+    initializeImageUrls,
+    selectedCharacter,
+    setLoading,
+    clearError,
+  } = useCharacterStore();
+
+  // 로딩 타임아웃 상태
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  // 로컬 에러 상태
+  const [localError, setLocalError] = useState<string | null>(null);
+  // 초기화 완료 상태
+  const [initialized, setInitialized] = useState(false);
 
   // 애니메이션 값 초기화
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -35,8 +68,73 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
 
   // 컴포넌트 마운트 시 이미지 URL 초기화
   useEffect(() => {
-    initializeImageUrls();
-  }, []);
+    loadImages();
+
+    return () => {
+      // 컴포넌트 언마운트 시 정리
+      setLoadingTimedOut(false);
+      setLocalError(null);
+    };
+  }, [selectedCharacter?.id, forceLoad]);
+
+  // 이미지 로딩 함수
+  const loadImages = () => {
+    // 이미지 URL이 이미 있고 강제 로드가 아니면 로드하지 않음
+    if (characterImages.normal && !forceLoad && initialized) {
+      return;
+    }
+
+    setLocalError(null);
+    setLoadingTimedOut(false);
+
+    if (!selectedCharacter) {
+      setLocalError("선택된 캐릭터가 없습니다.");
+      return;
+    }
+
+    // 로딩 타임아웃 설정
+    const timeoutId = setTimeout(() => {
+      setLoadingTimedOut(true);
+      setLocalError("이미지 로딩 시간이 초과되었습니다.");
+      setLoading(false); // 스토어의 로딩 상태도 강제로 해제
+    }, LOADING_TIMEOUT);
+
+    try {
+      initializeImageUrls()
+        .then(() => {
+          setInitialized(true);
+          clearTimeout(timeoutId);
+        })
+        .catch((err) => {
+          setLocalError(
+            err instanceof Error
+              ? err.message
+              : "이미지 URL 초기화 중 오류 발생"
+          );
+          clearTimeout(timeoutId);
+        });
+    } catch (err) {
+      setLocalError(
+        err instanceof Error
+          ? err.message
+          : "이미지 URL 초기화 시도 중 오류 발생"
+      );
+      clearTimeout(timeoutId);
+    }
+  };
+
+  // 로딩 상태 변경 감지
+  useEffect(() => {
+    // 로딩이 완료되면 초기화 완료 상태 설정
+    if (!isLoading && initialized) {
+      // 로딩 완료 처리
+    }
+  }, [isLoading, error]);
+
+  // 현재 상태 변경 감지
+  useEffect(() => {
+    // 상태 변경 감지
+  }, [currentState, characterImages]);
 
   // 상태 변경 시 애니메이션 적용
   useEffect(() => {
@@ -141,10 +239,25 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
   }[size];
 
   // 현재 이미지 URL
-  const currentImageUrl = imageUrls[currentState];
+  const currentImageUrl = characterImages[currentState];
+
+  // 수동 리로드 핸들러
+  const handleReload = () => {
+    setLoadingTimedOut(false);
+    setLocalError(null);
+    setInitialized(false);
+    clearError();
+    loadImages();
+  };
+
+  // 이미지가 정상적으로 로드되었는지 확인
+  const hasValidImage = currentImageUrl && currentImageUrl.length > 0;
 
   // 로딩 중이거나 오류 발생 시 표시할 내용
-  if (isLoading) {
+  if (
+    (isLoading && !loadingTimedOut && !hasValidImage) ||
+    (!hasValidImage && !loadingTimedOut && !localError && !error)
+  ) {
     return (
       <View style={[styles.container, sizeStyle]}>
         <ActivityIndicator size="large" color="#3498db" />
@@ -153,17 +266,22 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
     );
   }
 
-  if (error || !currentImageUrl) {
+  if (loadingTimedOut || localError || error || !hasValidImage) {
     return (
       <View style={[styles.container, sizeStyle]}>
         <Text style={styles.errorText}>이미지를 불러올 수 없습니다</Text>
-        <Text style={styles.errorSubText}>{error || "이미지가 없습니다"}</Text>
+        <Text style={styles.errorSubText}>
+          {localError || error || "이미지가 없습니다"}
+        </Text>
+        <TouchableOpacity onPress={handleReload} style={styles.reloadButton}>
+          <Text style={styles.reloadText}>다시 시도</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   // 캐릭터 상태에 따른 상태 텍스트
-  const stateTextMap = {
+  const stateTextMap: Record<CharacterStateType, string> = {
     normal: "평소 상태",
     pooping: "배변 중...",
     success: "성공!",
@@ -174,11 +292,7 @@ export const CharacterDisplay: React.FC<CharacterDisplayProps> = ({
     <View style={styles.container}>
       <Animated.View style={[styles.imageContainer, animatedStyle]}>
         <Image
-          source={
-            Platform.OS === "web"
-              ? { uri: currentImageUrl }
-              : { uri: `file://${currentImageUrl}` }
-          }
+          source={{ uri: currentImageUrl }}
           style={[styles.image, sizeStyle]}
           resizeMode="contain"
         />
@@ -226,5 +340,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     fontWeight: "500",
+  },
+  reloadButton: {
+    marginTop: 15,
+    backgroundColor: "#3498db",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 5,
+  },
+  reloadText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });

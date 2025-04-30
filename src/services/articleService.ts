@@ -16,11 +16,9 @@ interface HealthArticleRecord {
 // Supabase 인증 오류 로깅 및 처리
 const handleSupabaseError = (error: any, operation: string) => {
   if (error?.message?.includes("Invalid Refresh Token")) {
-    console.warn(`인증 토큰 오류 (${operation}):`, error.message);
-    // 필요 시 여기에 세션 초기화나 리로그인 로직 추가
+    // 인증 토큰 오류 처리
     return true;
   }
-  console.error(`Supabase 오류 (${operation}):`, error);
   return false;
 };
 
@@ -117,11 +115,8 @@ export const getHealthArticlesPaginated = async (
         error,
         "페이지네이션 게시글 조회"
       );
-      // 인증 오류여도 기본 응답 반환
       return { articles: null, hasMore: false, total: 0 };
     }
-
-    console.log("Supabase에서 받은 원본 데이터:", data); // 원본 데이터 로그
 
     const articles = data.map((article: HealthArticleRecord) => ({
       id: article.id,
@@ -133,14 +128,10 @@ export const getHealthArticlesPaginated = async (
       source: article.source,
     }));
 
-    console.log("변환된 게시물 첫번째 항목:", articles[0]); // 변환된 게시물 첫 번째 항목 확인
-
-    // 더 많은 데이터가 있는지 확인
     const hasMore = count !== null ? from + pageSize < count : false;
 
     return { articles, hasMore, total: count || 0 };
   } catch (error) {
-    console.error("페이지네이션 게시글 조회 중 예외 발생:", error);
     return { articles: null, hasMore: false, total: 0 };
   }
 };

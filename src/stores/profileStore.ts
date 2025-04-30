@@ -13,6 +13,7 @@ interface ProfileState {
   setNickname: (name: string) => void;
   setBirthdate: (date: string | null) => void;
   setCharacter: (character: string) => void;
+  saveProfile: () => Promise<void>;
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
@@ -60,6 +61,34 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       }
     } catch (error) {
       console.error("프로필 로드 중 에러 발생:", error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  saveProfile: async () => {
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+
+    set({ isLoading: true });
+
+    try {
+      const { error } = await supabase.from("profiles").upsert({
+        user_id: user.id,
+        nickname: get().nickname,
+        character_type: get().character,
+        avatar_url: get().avatarUrl,
+        birthdate: get().birthdate,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        console.error("프로필 저장 중 오류:", error);
+        throw error;
+      }
+    } catch (error) {
+      console.error("프로필 저장 중 에러 발생:", error);
+      throw error;
     } finally {
       set({ isLoading: false });
     }

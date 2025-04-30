@@ -46,7 +46,10 @@ export const MapScreen: React.FC = () => {
         </StyledText>
 
         <TouchableOpacity
-          style={styles.searchButton}
+          style={[
+            styles.searchButton,
+            { backgroundColor: isDark ? "#BAC095" : "#636B2F" },
+          ]}
           onPress={() => alert("준비 중인 기능입니다.")}
         >
           <Text style={styles.searchButtonText}>주변 화장실 검색</Text>
@@ -88,7 +91,10 @@ export const MapScreen: React.FC = () => {
             </StyledText>
           </StyledView>
           <TouchableOpacity
-            style={styles.directionButton}
+            style={[
+              styles.directionButton,
+              { backgroundColor: isDark ? "#3D4127" : "#BAC095" },
+            ]}
             onPress={() => alert("준비 중인 기능입니다.")}
           >
             <Text style={styles.directionButtonText}>길 안내</Text>
@@ -101,25 +107,39 @@ export const MapScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   searchButton: {
-    backgroundColor: "#007bff",
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 8,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   searchButtonText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
   },
   directionButton: {
-    backgroundColor: "#6c757d",
-    padding: 15,
-    borderRadius: 5,
+    padding: 12,
+    borderRadius: 8,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   directionButtonText: {
-    color: "#fff",
-    fontSize: 16,
+    color: "#FFFFFF",
+    fontSize: 14,
     fontWeight: "bold",
   },
 });

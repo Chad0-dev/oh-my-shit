@@ -15,48 +15,111 @@ const imageNameMap: Record<CharacterState, string> = {
 
 /**
  * 캐릭터 이미지 URL을 가져오는 함수
+ * @param characterId 캐릭터 ID (폴더 이름)
  * @param state 캐릭터 상태
  * @returns 해당 상태의 이미지 URL
  */
 export const getCharacterImageUrl = async (
+  characterId: string,
   state: CharacterState
 ): Promise<string> => {
   try {
-    console.log(`[characterService] 이미지 URL 요청: 상태=${state}`);
-
     // 이미지 파일명 결정 (매핑 테이블에서 가져옴)
     const imageName = imageNameMap[state];
     if (!imageName) {
       throw new Error(`알 수 없는 캐릭터 상태: ${state}`);
     }
 
-    // Supabase에서 이미지 URL 가져오기 - image 버킷의 basic 폴더에서 이미지를 가져옴
-    const { data } = await supabase.storage
+    // Supabase에서 이미지 URL 가져오기
+    const { data } = supabase.storage
       .from("images")
-      .getPublicUrl(`basic/${imageName}.png`);
-
-    console.log(`[characterService] Supabase 응답 확인:`, data);
+      .getPublicUrl(`${characterId}/${imageName}.png`);
 
     if (!data || !data.publicUrl) {
-      throw new Error(`이미지 URL이 없습니다: basic/${imageName}.png`);
+      throw new Error(`이미지 URL이 없습니다: ${characterId}/${imageName}.png`);
     }
 
-    console.log(
-      `[characterService] Supabase 이미지 URL 가져옴: ${data.publicUrl}`
-    );
     return data.publicUrl;
   } catch (error) {
-    console.error(
-      `[characterService] 이미지 URL 생성 오류(상태: ${state}):`,
-      error
-    );
     // 에러 발생 시 더미 이미지 URL 반환
-    const dummyImageUrl =
-      "https://placehold.co/400x400/FF6B6B/FFF?text=" + state + "-error";
-    console.log(
-      `[characterService] 에러로 인한 더미 이미지 URL 사용: ${dummyImageUrl}`
+    return `https://placehold.co/400x400/FF6B6B/FFF?text=${characterId}-${state}`;
+  }
+};
+
+/**
+ * 사용 가능한 캐릭터 목록을 가져오는 함수
+ * @returns 캐릭터 목록
+ */
+export const getAvailableCharacters = async () => {
+  try {
+    // images 버킷의 폴더 목록 가져오기
+    const { data: folders, error } = await supabase.storage
+      .from("images")
+      .list("", {
+        limit: 100,
+        offset: 0,
+        sortBy: { column: "name", order: "asc" },
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!folders || folders.length === 0) {
+      return [];
+    }
+
+    // 각 폴더의 normal.png URL 생성
+    const characters = await Promise.all(
+      folders
+        .filter((folder) => {
+          // .emptyFolderPlaceholder만 제외
+          return folder.name !== ".emptyFolderPlaceholder";
+        })
+        .map(async (folder) => {
+          try {
+            // normal.png 파일이 존재하는지 확인
+            const { data: fileExists, error: fileError } =
+              await supabase.storage.from("images").list(folder.name, {
+                limit: 1,
+                search: "normal.png",
+              });
+
+            if (fileError) {
+              return null;
+            }
+
+            if (!fileExists || fileExists.length === 0) {
+              return null;
+            }
+
+            const { data } = supabase.storage
+              .from("images")
+              .getPublicUrl(`${folder.name}/normal.png`);
+
+            if (!data || !data.publicUrl) {
+              return null;
+            }
+
+            return {
+              id: folder.name,
+              name: folder.name.charAt(0).toUpperCase() + folder.name.slice(1),
+              imageUrl: data.publicUrl,
+            };
+          } catch (error) {
+            return null;
+          }
+        })
     );
-    return dummyImageUrl;
+
+    // null 값 필터링
+    const validCharacters = characters.filter(
+      (char): char is NonNullable<typeof char> => char !== null
+    );
+
+    return validCharacters;
+  } catch (error) {
+    return [];
   }
 };
 
@@ -68,15 +131,12 @@ export const getAllCharacterImages = async (): Promise<
   Record<CharacterState, string | null>
 > => {
   try {
-    console.log("[characterService] 모든 캐릭터 이미지 로드 시작");
-
     // 모든 상태에 대한 이미지 URL 동시 요청
     const states: CharacterState[] = ["normal", "pooping", "success", "fail"];
     const imagePromises = states.map(async (state) => {
       try {
-        return { state, url: await getCharacterImageUrl(state) };
+        return { state, url: await getCharacterImageUrl("default", state) };
       } catch (e) {
-        console.error(`[characterService] ${state} 상태 이미지 로드 실패:`, e);
         return { state, url: null };
       }
     });
@@ -90,10 +150,8 @@ export const getAllCharacterImages = async (): Promise<
       return acc;
     }, {} as Record<CharacterState, string | null>);
 
-    console.log("[characterService] 모든 캐릭터 이미지 로드 완료:", imageUrls);
     return imageUrls;
   } catch (error) {
-    console.error("[characterService] 모든 캐릭터 이미지 로드 중 오류:", error);
     throw new Error(`모든 캐릭터 이미지 URL을 가져오는 중 오류 발생: ${error}`);
   }
 };
@@ -110,12 +168,6 @@ export const getCharacterStateFromTimerState = (
   isRunning: boolean,
   success?: boolean
 ): CharacterState => {
-  console.log(`[characterService] 타이머 상태에 따른 캐릭터 상태 결정:`, {
-    타이머완료: timerComplete,
-    실행중: isRunning,
-    성공여부: success,
-  });
-
   if (timerComplete) {
     // 타이머가 완료되면 success 파라미터에 따라 성공/실패 상태 반환
     return success === true ? "success" : success === false ? "fail" : "normal";

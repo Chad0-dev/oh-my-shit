@@ -21,22 +21,13 @@ import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { CharacterSelectModal } from "../../components/character/CharacterSelectModal";
+import { getCharacterImageUrl } from "../../services/characterService";
+import { Character } from "../../types/character";
+import { useCharacterStore } from "../../stores/characterStore";
 
-// 캐릭터 타입 정의
-type CharacterType = "basic" | "happy" | "cool" | "sleepy" | "angry";
-
-// 캐릭터 데이터 (URL은 나중에 동적으로 설정)
-const characterOptions: {
-  id: CharacterType;
-  name: string;
-  imageUrl: string | null;
-}[] = [
-  { id: "basic", name: "기본", imageUrl: null },
-  { id: "happy", name: "행복한", imageUrl: null },
-  { id: "cool", name: "쿨한", imageUrl: null },
-  { id: "sleepy", name: "졸린", imageUrl: null },
-  { id: "angry", name: "화난", imageUrl: null },
-];
+// 캐릭터 타입 정의 제거 (Character 인터페이스 사용)
+const characterOptions: Character[] = [];
 
 export const ProfileScreen: React.FC = () => {
   const { isDark } = useThemeStore();
@@ -45,8 +36,8 @@ export const ProfileScreen: React.FC = () => {
     setAvatarUrl: updateStoreAvatar,
     setNickname: updateStoreNickname,
     setBirthdate: updateStoreBirthdate,
-    setCharacter: updateStoreCharacter,
   } = useProfileStore();
+  const { selectedCharacter, setSelectedCharacter } = useCharacterStore();
 
   // 사용자 프로필 상태
   const [nickname, setNickname] = useState<string>("사용자");
@@ -54,86 +45,27 @@ export const ProfileScreen: React.FC = () => {
   const [birthdate, setBirthdate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [selectedCharacter, setSelectedCharacter] =
-    useState<CharacterType>("basic");
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [isLoadingCharacters, setIsLoadingCharacters] = useState<boolean>(true);
-  const [characterImageUrls, setCharacterImageUrls] = useState<
-    Record<CharacterType, string | null>
-  >({
-    basic: null,
-    happy: null,
-    cool: null,
-    sleepy: null,
-    angry: null,
-  });
-
-  // 비밀번호 변경 상태
-  const [currentPassword, setCurrentPassword] = useState<string>("");
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [showPasswordModal, setShowPasswordModal] = useState<boolean>(false);
+  const [isLoadingCharacters, setIsLoadingCharacters] =
+    useState<boolean>(false);
 
   // 캐릭터 선택 모달 상태
-  const [showCharacterModal, setShowCharacterModal] = useState<boolean>(false);
+  const [isCharacterSelectModalVisible, setCharacterSelectModalVisible] =
+    useState(false);
 
   // 프로필 데이터 로드
   useEffect(() => {
     if (user) {
       loadUserProfile();
-      loadCharacterImages();
     }
   }, [user]);
-
-  // 캐릭터 이미지 URL 로드
-  const loadCharacterImages = async () => {
-    setIsLoadingCharacters(true);
-    try {
-      const characterTypes: CharacterType[] = [
-        "basic",
-        "happy",
-        "cool",
-        "sleepy",
-        "angry",
-      ];
-      const urls: Record<CharacterType, string | null> = {
-        basic: null,
-        happy: null,
-        cool: null,
-        sleepy: null,
-        angry: null,
-      };
-
-      // 각 캐릭터 타입에 대한 이미지 URL 로드
-      for (const type of characterTypes) {
-        // Supabase의 images 버킷에서 캐릭터 이미지 URL 가져오기
-        const { data } = await supabase.storage
-          .from("images")
-          .getPublicUrl(`characters/${type}.png`);
-
-        if (data?.publicUrl) {
-          urls[type] = data.publicUrl;
-
-          // 캐릭터 옵션 리스트에도 URL 업데이트
-          const index = characterOptions.findIndex((c) => c.id === type);
-          if (index >= 0) {
-            characterOptions[index].imageUrl = data.publicUrl;
-          }
-        }
-      }
-
-      setCharacterImageUrls(urls);
-    } catch (error) {
-      console.error("캐릭터 이미지 로드 에러:", error);
-    } finally {
-      setIsLoadingCharacters(false);
-    }
-  };
 
   // 사용자 프로필 데이터 로드
   const loadUserProfile = async () => {
     try {
       if (!user) return;
+
+      setIsLoadingCharacters(true); // 캐릭터 로딩 상태 시작
 
       // Supabase에서 사용자 프로필 데이터 조회
       const { data, error } = await supabase
@@ -143,7 +75,6 @@ export const ProfileScreen: React.FC = () => {
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") {
-        console.error("프로필 로드 에러:", error);
         return;
       }
 
@@ -158,18 +89,48 @@ export const ProfileScreen: React.FC = () => {
           updateStoreBirthdate(data.birthdate);
         }
 
-        // 아바타 URL 설정 (이미 공개 URL인 경우)
+        // 아바타 URL 설정
         if (data.avatar_url) {
           setAvatarUrl(data.avatar_url);
           updateStoreAvatar(data.avatar_url);
         }
 
-        setSelectedCharacter(data.character_type || "basic");
-        updateStoreCharacter(data.character_type || "basic");
+        // 캐릭터 설정
+        if (data.character_type) {
+          try {
+            const character: Character = {
+              id: data.character_type,
+              name:
+                data.character_type.charAt(0).toUpperCase() +
+                data.character_type.slice(1),
+              imageUrl: await getCharacterImageUrl(
+                data.character_type,
+                "normal"
+              ),
+            };
+            setSelectedCharacter(character);
+          } catch (error) {
+            // 기본 캐릭터로 대체
+            const character: Character = {
+              id: "basic",
+              name: "Basic",
+              imageUrl: await getCharacterImageUrl("basic", "normal"),
+            };
+            setSelectedCharacter(character);
+          }
+        } else {
+          // 기본 캐릭터 설정
+          const character: Character = {
+            id: "basic",
+            name: "Basic",
+            imageUrl: await getCharacterImageUrl("basic", "normal"),
+          };
+          setSelectedCharacter(character);
+        }
+
         updateStoreNickname(data.nickname || "사용자");
       } else {
         // 프로필 데이터가 없는 경우 새 프로필 생성
-        console.log("프로필 데이터 없음, 새 프로필 생성");
 
         // 기본 값 설정
         const defaultNickname = user.email
@@ -178,6 +139,14 @@ export const ProfileScreen: React.FC = () => {
         setNickname(defaultNickname);
         setEmail(user.email || "");
         updateStoreNickname(defaultNickname);
+
+        // 기본 캐릭터 설정
+        const character: Character = {
+          id: "basic",
+          name: "Basic",
+          imageUrl: await getCharacterImageUrl("basic", "normal"),
+        };
+        setSelectedCharacter(character);
 
         // Supabase에 새 프로필 생성
         const { error: insertError } = await supabase.from("profiles").insert({
@@ -188,13 +157,34 @@ export const ProfileScreen: React.FC = () => {
           created_at: new Date(),
           updated_at: new Date(),
         });
-
-        if (insertError) {
-          console.error("새 프로필 생성 에러:", insertError);
-        }
       }
     } catch (error) {
-      console.error("프로필 로드 중 에러 발생:", error);
+      // 오류 처리
+    } finally {
+      setIsLoadingCharacters(false); // 로딩 상태 종료
+    }
+  };
+
+  const handleCharacterSelect = async (character: Character) => {
+    try {
+      if (!user) return;
+
+      // 스토어에 선택된 캐릭터 저장
+      setSelectedCharacter(character);
+
+      // 프로필 업데이트
+      const { error } = await supabase
+        .from("profiles")
+        .update({ character_type: character.id })
+        .eq("user_id", user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setCharacterSelectModalVisible(false);
+    } catch (error) {
+      // 오류 처리
     }
   };
 
@@ -204,8 +194,6 @@ export const ProfileScreen: React.FC = () => {
       // 로딩 상태 시작
       setIsUploading(true);
       setAvatarUrl(null);
-
-      console.log("이미지 업로드 시작:", imageUri);
 
       // 타임아웃 설정 (30초)
       const uploadPromise = uploadAvatarImageWithFileSystem(imageUri);
@@ -220,29 +208,18 @@ export const ProfileScreen: React.FC = () => {
       setIsUploading(false);
 
       if (newAvatarUrl) {
-        console.log("업로드 성공, URL:", newAvatarUrl);
         setAvatarUrl(newAvatarUrl);
         updateStoreAvatar(newAvatarUrl);
         Alert.alert("성공", "프로필 이미지가 업데이트되었습니다.");
         return true;
       } else {
-        console.log("업로드 실패, URL이 없음");
         Alert.alert("업로드 실패", "이미지 업로드 중 오류가 발생했습니다.");
         return false;
       }
     } catch (error) {
-      console.error("이미지 처리 에러:", error);
+      // 오류 처리
       setIsUploading(false);
-
-      // 에러 메시지 구체화
-      const errorMessage =
-        error instanceof Error
-          ? error.message === "업로드 시간 초과"
-            ? "업로드 시간이 초과되었습니다. 더 작은 이미지를 사용해보세요."
-            : error.message
-          : "이미지 처리 중 오류가 발생했습니다.";
-
-      Alert.alert("업로드 실패", errorMessage);
+      Alert.alert("업로드 실패", "이미지 처리 중 오류가 발생했습니다.");
       return false;
     }
   };
@@ -272,7 +249,7 @@ export const ProfileScreen: React.FC = () => {
         await processImageUpload(imageUri);
       }
     } catch (error) {
-      console.error("이미지 선택 에러:", error);
+      // 오류 처리
       setIsUploading(false);
       Alert.alert("오류", "이미지 선택 중 문제가 발생했습니다.");
     }
@@ -292,20 +269,9 @@ export const ProfileScreen: React.FC = () => {
 
       // FileSystem을 사용하여 파일 정보 확인
       const fileInfo = await FileSystem.getInfoAsync(uri);
-      console.log("파일 정보:", fileInfo);
 
       if (!fileInfo.exists) {
-        console.error("파일이 존재하지 않음:", uri);
         return null;
-      }
-
-      // 파일 크기 경고 (1MB 초과)
-      if (fileInfo.size && fileInfo.size > 1024 * 1024) {
-        console.log(
-          `큰 파일 감지: ${
-            Math.round((fileInfo.size / 1024 / 1024) * 10) / 10
-          }MB`
-        );
       }
 
       // 파일을 Base64로 읽기 (바이너리로 전송하기 위해)
@@ -315,7 +281,6 @@ export const ProfileScreen: React.FC = () => {
 
       // 단순화된 업로드 방식 - Supabase 클라이언트 직접 사용
       try {
-        console.log("Supabase 업로드 시작 - 클라이언트 API");
         const { data, error } = await supabase.storage
           .from("avatar")
           .upload(filePath, decode(fileContent), {
@@ -324,11 +289,8 @@ export const ProfileScreen: React.FC = () => {
           });
 
         if (error) {
-          console.error("Supabase 클라이언트 업로드 에러:", error);
           throw new Error(`업로드 실패: ${error.message}`);
         }
-
-        console.log("업로드 성공:", data);
 
         // 업로드된 이미지의 공개 URL 가져오기
         const { data: urlData } = supabase.storage
@@ -337,11 +299,9 @@ export const ProfileScreen: React.FC = () => {
 
         return urlData?.publicUrl || null;
       } catch (error) {
-        console.error("업로드 실패:", error);
         throw error;
       }
     } catch (error) {
-      console.error("아바타 이미지 업로드 에러:", error);
       throw error;
     }
   };
@@ -389,139 +349,39 @@ export const ProfileScreen: React.FC = () => {
   // 프로필 저장
   const saveProfile = async () => {
     try {
-      // DateTimePicker 닫기
-      setShowDatePicker(false);
-
       if (!user) return;
 
-      // 입력 검증
-      if (!nickname.trim()) {
-        Alert.alert("오류", "닉네임을 입력해주세요.");
-        return;
-      }
-
-      // 프로필 데이터 준비
       const profileData = {
-        user_id: user.id,
         nickname,
-        birthdate: birthdate ? birthdate.toISOString().split("T")[0] : null, // YYYY-MM-DD 형식으로 변환
+        birthdate: birthdate ? birthdate.toISOString().split("T")[0] : null,
         avatar_url: avatarUrl,
-        character_type: selectedCharacter,
+        character_type: selectedCharacter?.id || "basic",
         updated_at: new Date(),
       };
 
-      // 먼저 프로필이 이미 존재하는지 확인
-      const { data: existingProfile, error: checkError } = await supabase
+      const { error } = await supabase
         .from("profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .update(profileData)
+        .eq("user_id", user.id);
 
-      if (checkError && checkError.code !== "PGRST116") {
-        console.error("프로필 확인 에러:", checkError);
-        Alert.alert("오류", "프로필 정보 확인 중 오류가 발생했습니다.");
-        return;
+      if (error) {
+        throw error;
       }
-
-      let saveError;
-
-      if (existingProfile) {
-        // 이미 존재하는 프로필이면 UPDATE 사용
-        console.log("기존 프로필 업데이트:", existingProfile.id);
-        const { error } = await supabase
-          .from("profiles")
-          .update(profileData)
-          .eq("user_id", user.id);
-        saveError = error;
-      } else {
-        // 존재하지 않는 프로필이면 INSERT 사용
-        console.log("새 프로필 생성");
-        const { error } = await supabase.from("profiles").insert(profileData);
-        saveError = error;
-      }
-
-      if (saveError) {
-        console.error("프로필 저장 에러:", saveError);
-        Alert.alert("오류", "프로필 저장 중 오류가 발생했습니다.");
-        return;
-      }
-
-      Alert.alert("성공", "프로필이 업데이트되었습니다.");
-      setIsEditing(false);
 
       // 프로필 스토어 업데이트
       updateStoreNickname(nickname);
-      updateStoreCharacter(selectedCharacter);
-      if (birthdate) {
-        updateStoreBirthdate(birthdate.toISOString().split("T")[0]);
-      }
+      updateStoreBirthdate(
+        birthdate ? birthdate.toISOString().split("T")[0] : null
+      );
       if (avatarUrl) {
         updateStoreAvatar(avatarUrl);
       }
+
+      setIsEditing(false);
+      Alert.alert("성공", "프로필이 업데이트되었습니다.");
     } catch (error) {
-      console.error("프로필 저장 중 에러 발생:", error);
-      Alert.alert("오류", "프로필 저장 중 오류가 발생했습니다.");
+      Alert.alert("오류", "프로필 업데이트 중 오류가 발생했습니다.");
     }
-  };
-
-  // 비밀번호 변경
-  const changePassword = async () => {
-    try {
-      // 입력 검증
-      if (!currentPassword) {
-        Alert.alert("오류", "현재 비밀번호를 입력해주세요.");
-        return;
-      }
-
-      if (!newPassword) {
-        Alert.alert("오류", "새 비밀번호를 입력해주세요.");
-        return;
-      }
-
-      if (newPassword !== confirmPassword) {
-        Alert.alert("오류", "새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
-        return;
-      }
-
-      if (newPassword.length < 6) {
-        Alert.alert("오류", "비밀번호는 최소 6자 이상이어야 합니다.");
-        return;
-      }
-
-      // Supabase에서 비밀번호 변경
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) {
-        console.error("비밀번호 변경 에러:", error);
-        Alert.alert("오류", "비밀번호 변경 중 오류가 발생했습니다.");
-        return;
-      }
-
-      Alert.alert("성공", "비밀번호가 성공적으로 변경되었습니다.");
-      setShowPasswordModal(false);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      console.error("비밀번호 변경 중 에러 발생:", error);
-      Alert.alert("오류", "비밀번호 변경 중 오류가 발생했습니다.");
-    }
-  };
-
-  // 캐릭터 선택
-  const selectCharacter = (character: CharacterType) => {
-    setSelectedCharacter(character);
-    setShowCharacterModal(false);
-    // 편집 모드에서만 즉시 업데이트하지 않음 (저장시 업데이트)
-  };
-
-  // 특정 캐릭터의 이미지 URL 가져오기
-  const getCharacterImageUrl = (
-    characterType: CharacterType
-  ): string | null => {
-    return characterImageUrls[characterType] || null;
   };
 
   return (
@@ -751,29 +611,6 @@ export const ProfileScreen: React.FC = () => {
             )}
           </View>
         )}
-
-        {/* 비밀번호 변경 버튼 */}
-        <TouchableOpacity
-          style={[
-            styles.passwordChangeButton,
-            { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
-          ]}
-          onPress={() => setShowPasswordModal(true)}
-        >
-          <MaterialIcons
-            name="lock"
-            size={18}
-            color={isDark ? "#CCCCCC" : "#636B2F"}
-          />
-          <Text
-            style={[
-              styles.passwordChangeText,
-              { color: isDark ? "#FFFFFF" : "#000000" },
-            ]}
-          >
-            비밀번호 변경
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* 캐릭터 설정 섹션 */}
@@ -794,28 +631,31 @@ export const ProfileScreen: React.FC = () => {
 
         <View style={styles.characterPreviewContainer}>
           {isLoadingCharacters ? (
-            <ActivityIndicator size="large" color="#636B2F" />
-          ) : (
+            <View style={styles.characterLoadingContainer}>
+              <ActivityIndicator size="large" color="#636B2F" />
+              <Text
+                style={{ color: isDark ? "#BBBBBB" : "#666666", marginTop: 10 }}
+              >
+                캐릭터 로딩 중...
+              </Text>
+            </View>
+          ) : selectedCharacter?.imageUrl ? (
             <>
-              <Image
-                source={getCharacterImageUrl(selectedCharacter) || undefined}
-                style={styles.characterPreview}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-                transition={300}
-              />
-              <View style={styles.characterInfo}>
+              <View style={styles.characterImageContainer}>
+                <Image
+                  source={{ uri: selectedCharacter.imageUrl }}
+                  style={styles.characterPreview}
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                  transition={300}
+                />
                 <Text
                   style={[
                     styles.characterName,
                     { color: isDark ? "#FFFFFF" : "#000000" },
                   ]}
                 >
-                  {
-                    characterOptions.find((c) => c.id === selectedCharacter)
-                      ?.name
-                  }{" "}
-                  캐릭터
+                  {selectedCharacter.name}
                 </Text>
                 {isEditing && (
                   <TouchableOpacity
@@ -823,7 +663,7 @@ export const ProfileScreen: React.FC = () => {
                       styles.changeCharacterButton,
                       { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
                     ]}
-                    onPress={() => setShowCharacterModal(true)}
+                    onPress={() => setCharacterSelectModalVisible(true)}
                   >
                     <Text
                       style={[
@@ -837,180 +677,35 @@ export const ProfileScreen: React.FC = () => {
                 )}
               </View>
             </>
+          ) : (
+            <View style={styles.characterLoadingContainer}>
+              <Text style={{ color: isDark ? "#BBBBBB" : "#666666" }}>
+                캐릭터를 불러올 수 없습니다
+              </Text>
+              <TouchableOpacity
+                style={{
+                  marginTop: 15,
+                  backgroundColor: "#636B2F",
+                  paddingVertical: 8,
+                  paddingHorizontal: 15,
+                  borderRadius: 5,
+                }}
+                onPress={loadUserProfile}
+              >
+                <Text style={{ color: "#FFFFFF" }}>다시 시도</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </View>
 
-      {/* 비밀번호 변경 모달 */}
-      <Modal
-        visible={showPasswordModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowPasswordModal(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View
-            style={[
-              styles.modalContainer,
-              { backgroundColor: isDark ? "#333333" : "#FFFFFF" },
-            ]}
-          >
-            <Text
-              style={[
-                styles.modalTitle,
-                { color: isDark ? "#FFFFFF" : "#000000" },
-              ]}
-            >
-              비밀번호 변경
-            </Text>
-
-            <TextInput
-              style={[
-                styles.modalInput,
-                {
-                  backgroundColor: isDark ? "#444444" : "#F5F5F5",
-                  color: isDark ? "#FFFFFF" : "#000000",
-                },
-              ]}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              placeholder="현재 비밀번호"
-              placeholderTextColor={isDark ? "#AAAAAA" : "#999999"}
-              secureTextEntry
-            />
-
-            <TextInput
-              style={[
-                styles.modalInput,
-                {
-                  backgroundColor: isDark ? "#444444" : "#F5F5F5",
-                  color: isDark ? "#FFFFFF" : "#000000",
-                },
-              ]}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="새 비밀번호"
-              placeholderTextColor={isDark ? "#AAAAAA" : "#999999"}
-              secureTextEntry
-            />
-
-            <TextInput
-              style={[
-                styles.modalInput,
-                {
-                  backgroundColor: isDark ? "#444444" : "#F5F5F5",
-                  color: isDark ? "#FFFFFF" : "#000000",
-                },
-              ]}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="새 비밀번호 확인"
-              placeholderTextColor={isDark ? "#AAAAAA" : "#999999"}
-              secureTextEntry
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowPasswordModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>취소</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={changePassword}
-              >
-                <Text style={styles.saveButtonText}>변경</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
       {/* 캐릭터 선택 모달 */}
-      <Modal
-        visible={showCharacterModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowCharacterModal(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View
-            style={[
-              styles.modalContainer,
-              styles.characterModalContainer,
-              { backgroundColor: isDark ? "#333333" : "#FFFFFF" },
-            ]}
-          >
-            <Text
-              style={[
-                styles.modalTitle,
-                { color: isDark ? "#FFFFFF" : "#000000" },
-              ]}
-            >
-              캐릭터 선택
-            </Text>
-
-            <FlatList
-              data={characterOptions}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.characterOption,
-                    selectedCharacter === item.id &&
-                      styles.selectedCharacterOption,
-                    {
-                      backgroundColor: isDark ? "#444444" : "#F5F5F5",
-                      borderColor:
-                        selectedCharacter === item.id
-                          ? "#636B2F"
-                          : "transparent",
-                    },
-                  ]}
-                  onPress={() => selectCharacter(item.id)}
-                >
-                  <Image
-                    source={item.imageUrl || ""}
-                    style={styles.characterOptionImage}
-                    contentFit="contain"
-                    cachePolicy="memory-disk"
-                    transition={200}
-                  />
-                  <Text
-                    style={[
-                      styles.characterOptionName,
-                      { color: isDark ? "#FFFFFF" : "#000000" },
-                    ]}
-                  >
-                    {item.name}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              numColumns={2}
-              contentContainerStyle={styles.characterGrid}
-            />
-
-            <TouchableOpacity
-              style={[
-                styles.modalCloseButton,
-                { backgroundColor: isDark ? "#444444" : "#F5F5F5" },
-              ]}
-              onPress={() => setShowCharacterModal(false)}
-            >
-              <Text
-                style={[
-                  styles.modalCloseText,
-                  { color: isDark ? "#FFFFFF" : "#000000" },
-                ]}
-              >
-                닫기
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <CharacterSelectModal
+        visible={isCharacterSelectModalVisible}
+        onClose={() => setCharacterSelectModalVisible(false)}
+        onSelect={handleCharacterSelect}
+        currentCharacter={selectedCharacter?.id || "basic"}
+      />
     </ScrollView>
   );
 };
@@ -1136,27 +831,35 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   characterPreviewContainer: {
-    flexDirection: "row",
+    width: "100%",
     alignItems: "center",
+    justifyContent: "center",
+  },
+  characterImageContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
   },
   characterPreview: {
-    width: 100,
-    height: 100,
-    marginRight: 15,
+    width: 160,
+    height: 160,
+    marginBottom: 15,
   },
   characterInfo: {
-    flex: 1,
+    alignItems: "center",
+    width: "100%",
   },
   characterName: {
     fontSize: 18,
     fontWeight: "500",
-    marginBottom: 10,
+    marginBottom: 15,
+    textAlign: "center",
   },
   changeCharacterButton: {
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 8,
-    alignSelf: "flex-start",
+    marginTop: 5,
   },
   changeCharacterText: {
     fontSize: 14,
@@ -1212,14 +915,6 @@ const styles = StyleSheet.create({
   characterGrid: {
     paddingVertical: 10,
   },
-  characterOption: {
-    width: "45%",
-    margin: "2.5%",
-    padding: 10,
-    borderRadius: 10,
-    alignItems: "center",
-    borderWidth: 2,
-  },
   selectedCharacterOption: {
     borderWidth: 2,
   },
@@ -1251,5 +946,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     textAlign: "right",
+  },
+  characterLoadingContainer: {
+    width: "100%",
+    height: 100,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

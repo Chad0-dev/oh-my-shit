@@ -11,6 +11,18 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     persistSession: true,
     detectSessionInUrl: false,
   },
+  global: {
+    headers: {
+      "x-client-info": "supabase-js-react-native",
+    },
+  },
+});
+
+// 디버깅을 위한 로그 추가
+console.log("[Supabase] 클라이언트 초기화:", {
+  url: SUPABASE_URL,
+  hasAnonKey: !!SUPABASE_ANON_KEY,
+  storage: supabase.storage,
 });
 
 // 세션 상태 확인 함수

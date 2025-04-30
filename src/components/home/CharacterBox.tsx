@@ -6,10 +6,13 @@ import {
   Animated,
   ActivityIndicator,
   TouchableOpacity,
+  Text,
 } from "react-native";
 import { Image } from "expo-image";
 import { useTimerStore } from "../../stores/timerStore";
-import { supabase } from "../../supabase/client";
+import { useCharacterStore } from "../../stores/characterStore";
+import { getCharacterImageUrl } from "../../services/characterService";
+import { useProfileStore } from "../../stores/profileStore";
 
 const { width, height } = Dimensions.get("window");
 
@@ -20,66 +23,76 @@ export const CharacterBox = () => {
   // resultState 직접 구독 추가
   const { isRunning, buttonState, resultState, setResultState } =
     useTimerStore();
+  const {
+    selectedCharacter,
+    characterImages,
+    currentState,
+    setCurrentState,
+    isLoading: characterLoading,
+    initializeImageUrls,
+  } = useCharacterStore();
+  const { character: profileCharacter } = useProfileStore();
+
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
-  const [characterState, setCharacterState] =
-    useState<CharacterState>("normal");
   const [isLoading, setIsLoading] = useState(true);
-  const [imageUrls, setImageUrls] = useState<
-    Record<CharacterState, string | null>
-  >({
-    normal: null,
-    pooping: null,
-    success: null,
-    fail: null,
-  });
 
-  // 이미지 URL 로드
+  // 프로필의 캐릭터 정보로 characterStore 초기화
   useEffect(() => {
-    loadImageUrls();
-  }, []);
+    const initializeCharacter = async () => {
+      setIsLoading(true);
 
-  // 상태 변경 감지
-  useEffect(() => {
-    if (resultState === "success") {
-      setCharacterState("success");
-    } else if (resultState === "fail") {
-      setCharacterState("fail");
-    } else if (isRunning) {
-      setCharacterState("pooping");
-    } else {
-      setCharacterState("normal");
-    }
-  }, [isRunning, resultState, buttonState]);
+      try {
+        // 프로필에서 설정된 캐릭터 ID 확인
+        const characterId = profileCharacter || "basic";
 
-  // 이미지 URL 로드 함수
-  const loadImageUrls = async () => {
-    setIsLoading(true);
-    try {
-      const states: CharacterState[] = ["normal", "pooping", "success", "fail"];
-      const urls: Record<CharacterState, string | null> = {
-        normal: null,
-        pooping: null,
-        success: null,
-        fail: null,
-      };
+        // 현재 선택된 캐릭터가 없거나 다른 캐릭터인 경우에만 초기화
+        if (!selectedCharacter || selectedCharacter.id !== characterId) {
+          // 캐릭터 이미지 URL 가져오기
+          const normalImageUrl = await getCharacterImageUrl(
+            characterId,
+            "normal"
+          );
 
-      for (const state of states) {
-        const { data } = await supabase.storage
-          .from("images")
-          .getPublicUrl(`basic/${state}.png`);
+          // 캐릭터 스토어 업데이트
+          const characterInfo = {
+            id: characterId,
+            name: characterId.charAt(0).toUpperCase() + characterId.slice(1),
+            imageUrl: normalImageUrl,
+          };
 
-        if (data && data.publicUrl) {
-          urls[state] = data.publicUrl;
+          // 기존 캐릭터 스토어에 캐릭터 설정
+          useCharacterStore.getState().setSelectedCharacter(characterInfo);
+        } else {
+          // 이미 올바른 캐릭터가 선택되어 있으면 이미지만 초기화
+          initializeImageUrls();
         }
+      } catch (error) {
+        // 오류 처리
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setImageUrls(urls);
-    } catch (error) {
-      // 오류 처리는 유지
-    } finally {
-      setIsLoading(false);
+    initializeCharacter();
+  }, [profileCharacter]);
+
+  // 상태 변경 감지 및 characterStore 동기화
+  useEffect(() => {
+    let newState: CharacterState = "normal";
+
+    if (resultState === "success") {
+      newState = "success";
+    } else if (resultState === "fail") {
+      newState = "fail";
+    } else if (isRunning) {
+      newState = "pooping";
+    } else {
+      newState = "normal";
     }
-  };
+
+    // 캐릭터 스토어의 상태 업데이트
+    setCurrentState(newState);
+  }, [isRunning, resultState, buttonState]);
 
   // 펄스 애니메이션
   useEffect(() => {
@@ -111,8 +124,12 @@ export const CharacterBox = () => {
     }
 
     setResultState(null);
-    setCharacterState("normal");
+    setCurrentState("normal");
   };
+
+  // 현재 이미지 URL
+  const currentImageUrl = characterImages?.[currentState] || "";
+  const isLoadingState = isLoading || characterLoading || !currentImageUrl;
 
   return (
     <TouchableOpacity
@@ -128,12 +145,15 @@ export const CharacterBox = () => {
           },
         ]}
       >
-        {isLoading ? (
-          <ActivityIndicator size="large" color="#636B2F" />
+        {isLoadingState ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#636B2F" />
+            <Text style={styles.loadingText}>캐릭터 로딩 중...</Text>
+          </View>
         ) : (
           <View style={styles.imageContainer}>
             <Image
-              source={imageUrls[characterState] || ""}
+              source={{ uri: currentImageUrl }}
               style={styles.image}
               contentFit="contain"
               cachePolicy="memory-disk"
@@ -175,5 +195,16 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
+  },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: "100%",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#666",
   },
 });

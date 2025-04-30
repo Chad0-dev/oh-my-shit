@@ -101,9 +101,9 @@ export const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({
                     textDecorationLine: "underline",
                   },
                 ]}
-                onPress={() =>
-                  console.log("Source link pressed:", article.source)
-                }
+                onPress={() => {
+                  // 출처 링크 클릭 처리
+                }}
               >
                 출처: {article.source}
               </Text>
