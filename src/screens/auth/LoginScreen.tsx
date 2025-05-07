@@ -1,16 +1,24 @@
-import React, { useState } from "react";
-import { Platform, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  View,
+  StatusBar,
+  ScrollView,
+} from "react-native";
 import { useAuthStore } from "../../stores/authStore";
 import { useThemeStore } from "../../stores/themeStore";
 import {
   StyledSafeAreaView,
   StyledText,
   StyledView,
-  StyledImage,
   StyledKeyboardAvoidingView,
 } from "../../utils/styled";
 import { Button } from "../../components/ui/Button";
 import { InputField } from "../../components/ui/InputField";
+import * as Font from "expo-font";
 
 interface LoginScreenProps {
   onSignUpPress: () => void;
@@ -22,6 +30,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  const loginBg = require("../../../assets/images/login_bg.jpg");
+
+  // 폰트 로딩
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        Pattaya: require("../../../assets/fonts/Pattaya-Regular.ttf"),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   const handleSubmit = async () => {
     clearError();
@@ -37,41 +59,48 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
     }
   };
 
+  if (!fontsLoaded) {
+    return (
+      <StyledView className="flex-1 justify-center items-center">
+        <StyledText>로딩 중...</StyledText>
+      </StyledView>
+    );
+  }
+
   return (
-    <StyledSafeAreaView className={`flex-1`}>
+    <View style={{ flex: 1, backgroundColor: isDark ? "#1A1A1A" : "#FFFFFF" }}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent
+      />
+
       {/* 배경 이미지 */}
-      <StyledImage
-        source={require("../../../assets/images/login_bg.jpg")}
-        className="absolute w-full h-full"
-        resizeMode="cover"
-      />
+      <View style={styles.backgroundContainer}>
+        <Image source={loginBg} style={styles.backgroundImage} />
+      </View>
 
-      {/* 반투명 오버레이 */}
-      <StyledView
-        className={`absolute w-full h-full ${
-          isDark ? "bg-mossy-darkest/70" : "bg-white/50"
-        }`}
-      />
-
-      <StyledKeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 z-10"
+      {/* 콘텐츠 영역 */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
       >
-        {/* 로그인 폼 */}
-        <StyledView className="flex-1 justify-center px-6 pt-12">
-          <StyledView
-            className={`p-6 rounded-lg ${
-              isDark ? "bg-mossy-darkest/80" : "bg-white/80"
-            }`}
-          >
+        <StyledSafeAreaView style={{ flex: 1, width: "100%" }}>
+          {/* 타이틀 영역 */}
+          <View style={styles.titleContainer}>
             <StyledText
-              className={`text-3xl font-bold text-center mb-10 ${
+              className={`text-center ${
                 isDark ? "text-mossy-light" : "text-mossy-dark"
               }`}
+              style={styles.titleText}
             >
               Oh My Sh!t
             </StyledText>
+          </View>
 
+          {/* 입력 폼 영역 */}
+          <View style={styles.formContainer}>
             <InputField
               label="이메일"
               placeholder="your@email.com"
@@ -106,18 +135,54 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
               fullWidth
               style={styles.marginTopSmall}
             />
-          </StyledView>
-        </StyledView>
-      </StyledKeyboardAvoidingView>
-    </StyledSafeAreaView>
+          </View>
+        </StyledSafeAreaView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    paddingTop: Platform.OS === "ios" ? 50 : 40,
+  },
+  titleContainer: {
+    width: "100%",
+    alignItems: "center",
+    paddingVertical: 20,
+    marginBottom: 10,
+    marginTop: 20,
+  },
+  titleText: {
+    fontFamily: "Pattaya",
+    fontSize: 64,
+    lineHeight: 80,
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  formContainer: {
+    width: "100%",
+    paddingHorizontal: 24,
+  },
   marginTop: {
     marginTop: 16,
+    zIndex: 1,
   },
   marginTopSmall: {
     marginTop: 8,
+    zIndex: 1,
+  },
+  backgroundContainer: {
+    position: "absolute",
+    bottom: 20,
+    width: "100%",
+    height: 450,
+  },
+  backgroundImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
 });

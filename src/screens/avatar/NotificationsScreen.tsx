@@ -26,7 +26,7 @@ export const NotificationsScreen: React.FC = () => {
     <ScrollView
       style={[
         styles.container,
-        { backgroundColor: isDark ? "#1A1A1A" : "#FFFFFF" },
+        { backgroundColor: isDark ? "#3D4127" : "#FFFFFF" },
       ]}
     >
       <Text style={[styles.title, { color: isDark ? "#FFFFFF" : "#000000" }]}>
@@ -54,9 +54,59 @@ export const NotificationsScreen: React.FC = () => {
             { color: isDark ? "#DDDDDD" : "#333333" },
           ]}
         >
-          화장실에서 더 효율적이고 즐거운 시간을 보낼 수 있도록 도와주는
-          앱입니다. 타이머 기능과 통계를 통해 당신의 화장실 습관을 개선하세요.
+          올바른 배변 습관을 위한 앱입니다.
         </Text>
+
+        <View style={styles.featureItem}>
+          <Ionicons
+            name="timer-outline"
+            size={16}
+            color={isDark ? "#CCCCCC" : "#636B2F"}
+            style={styles.featureIcon}
+          />
+          <Text
+            style={[
+              styles.featureText,
+              { color: isDark ? "#DDDDDD" : "#333333" },
+            ]}
+          >
+            타이머를 이용해 너무 오래 앉아 있지 않도록 도와줍니다.
+          </Text>
+        </View>
+
+        <View style={styles.featureItem}>
+          <Ionicons
+            name="calendar-outline"
+            size={16}
+            color={isDark ? "#CCCCCC" : "#636B2F"}
+            style={styles.featureIcon}
+          />
+          <Text
+            style={[
+              styles.featureText,
+              { color: isDark ? "#DDDDDD" : "#333333" },
+            ]}
+          >
+            캘린더를 통해 나의 배변 컨디션을 확인할 수 있습니다.
+          </Text>
+        </View>
+
+        <View style={styles.featureItem}>
+          <Ionicons
+            name="book-outline"
+            size={16}
+            color={isDark ? "#CCCCCC" : "#636B2F"}
+            style={styles.featureIcon}
+          />
+          <Text
+            style={[
+              styles.featureText,
+              { color: isDark ? "#DDDDDD" : "#333333" },
+            ]}
+          >
+            배변 활동에 관한 유용한 정보와 지식을 제공합니다.
+          </Text>
+        </View>
       </View>
 
       {/* 팀 정보 */}
@@ -75,7 +125,7 @@ export const NotificationsScreen: React.FC = () => {
             { color: isDark ? "#DDDDDD" : "#333333" },
           ]}
         >
-          화장실팀 일동
+          OhMySh!t.dev
         </Text>
         <View style={styles.teamMember}>
           <MaterialCommunityIcons
@@ -89,7 +139,7 @@ export const NotificationsScreen: React.FC = () => {
               { color: isDark ? "#DDDDDD" : "#333333" },
             ]}
           >
-            기획 및 디자인: 화장실 기획팀
+            기획 및 디자인: Chad
           </Text>
         </View>
         <View style={styles.teamMember}>
@@ -104,7 +154,7 @@ export const NotificationsScreen: React.FC = () => {
               { color: isDark ? "#DDDDDD" : "#333333" },
             ]}
           >
-            개발: 화장실 개발팀
+            개발: Chad
           </Text>
         </View>
       </View>
@@ -121,7 +171,7 @@ export const NotificationsScreen: React.FC = () => {
         </Text>
         <TouchableOpacity
           style={styles.contactItem}
-          onPress={() => openLink("mailto:support@ohmyshit.com")}
+          onPress={() => openLink("mailto:ohmyshit.dev@gmail.com")}
         >
           <Ionicons
             name="mail"
@@ -134,15 +184,15 @@ export const NotificationsScreen: React.FC = () => {
               { color: isDark ? "#DDDDDD" : "#333333" },
             ]}
           >
-            support@ohmyshit.com
+            ohmyshit.dev@gmail.com
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.contactItem}
-          onPress={() => openLink("https://ohmyshit.com")}
+          onPress={() => openLink("https://instagram.com/ohmyshit")}
         >
           <Ionicons
-            name="globe"
+            name="logo-instagram"
             size={18}
             color={isDark ? "#CCCCCC" : "#636B2F"}
           />
@@ -152,7 +202,7 @@ export const NotificationsScreen: React.FC = () => {
               { color: isDark ? "#DDDDDD" : "#333333" },
             ]}
           >
-            www.ohmyshit.com
+            @ohmyshit
           </Text>
         </TouchableOpacity>
       </View>
@@ -181,56 +231,6 @@ export const NotificationsScreen: React.FC = () => {
           이 앱에 포함된 모든 콘텐츠와 자료는 저작권법에 의해 보호받습니다.
           콘텐츠의 무단 복제, 배포, 수정 및 재사용은 금지되어 있습니다.
         </Text>
-      </View>
-
-      {/* 오픈소스 라이센스 */}
-      <View style={styles.section}>
-        <Text
-          style={[
-            styles.sectionTitle,
-            { color: isDark ? "#FFFFFF" : "#000000" },
-          ]}
-        >
-          오픈소스 라이센스
-        </Text>
-        <Text
-          style={[
-            styles.description,
-            { color: isDark ? "#DDDDDD" : "#333333" },
-          ]}
-        >
-          이 앱은 다음과 같은 오픈소스 라이브러리를 사용합니다:
-        </Text>
-        <Text
-          style={[
-            styles.licenseItem,
-            { color: isDark ? "#DDDDDD" : "#333333" },
-          ]}
-        >
-          • React Native
-        </Text>
-        <Text
-          style={[
-            styles.licenseItem,
-            { color: isDark ? "#DDDDDD" : "#333333" },
-          ]}
-        >
-          • Expo
-        </Text>
-        <Text
-          style={[
-            styles.licenseItem,
-            { color: isDark ? "#DDDDDD" : "#333333" },
-          ]}
-        >
-          • Zustand
-        </Text>
-        <TouchableOpacity
-          style={styles.licenseButton}
-          onPress={() => openLink("https://ohmyshit.com/licenses")}
-        >
-          <Text style={styles.licenseButtonText}>전체 라이센스 보기</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -290,21 +290,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
-  licenseItem: {
-    fontSize: 14,
-    marginBottom: 4,
-    marginLeft: 10,
-  },
-  licenseButton: {
-    backgroundColor: "#636B2F",
-    padding: 10,
-    borderRadius: 5,
+  featureItem: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
+    marginBottom: 10,
+    marginTop: 5,
   },
-  licenseButtonText: {
-    color: "#FFFFFF",
+  featureIcon: {
+    marginRight: 10,
+  },
+  featureText: {
     fontSize: 14,
-    fontWeight: "bold",
+    lineHeight: 20,
+    flex: 1,
   },
 });

@@ -7,6 +7,7 @@ import { InfoTicker } from "../../components/home/InfoTicker";
 import { useTimerStore } from "../../stores/timerStore";
 import { useProfileStore } from "../../stores/profileStore";
 import { useAuthStore } from "../../stores/authStore";
+import { useThemeStore } from "../../stores/themeStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // 앱 세션 키
@@ -16,6 +17,7 @@ export const HomeScreen = () => {
   const { resetAllState } = useTimerStore();
   const { loadProfile } = useProfileStore();
   const { user } = useAuthStore();
+  const { isDark } = useThemeStore();
   const [isInitialized, setIsInitialized] = useState(false);
 
   // 앱 초기화 상태 확인 및 처리
@@ -60,7 +62,9 @@ export const HomeScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, isDark && { backgroundColor: "#3D4127" }]}
+    >
       <InfoTicker />
       <CharacterBox />
       <Timer />

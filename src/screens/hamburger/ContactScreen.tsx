@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
+import { supabase } from "../../supabase/client";
 
 // 아이콘 타입 지정
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
@@ -25,43 +25,32 @@ interface ContactMethod {
   action: () => void;
 }
 
-const sendEmailViaEmailJS = async (
+// Supabase를 통해 문의사항 저장
+const saveInquiryToDatabase = async (
   name: string,
   email: string,
   subject: string,
   message: string
 ) => {
-  const serviceID = "service_omxhsfp";
-  const templateID = "template_70jh9kh";
-  const userID = "cAZN8AsMVu_cA97W6";
-
-  const templateParams = {
-    from_name: name || "익명",
-    from_email: email || "no-reply@ohmyshit.app",
-    subject: subject || "Oh My Sh!t 앱 문의",
-    message,
-    name, // 추가된 라인
-  };
-
   try {
-    const res = await axios.post(
-      "https://api.emailjs.com/api/v1.0/email/send",
+    const { data, error } = await supabase.from("inquiries").insert([
       {
-        service_id: serviceID,
-        template_id: templateID,
-        user_id: userID,
-        template_params: templateParams,
+        name: name || null,
+        email: email || null,
+        subject: subject || "제목 없음",
+        message,
+        status: "pending",
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("이메일 전송 성공!", res.data);
+    ]);
+
+    if (error) {
+      console.error("문의사항 저장 중 오류:", error);
+      return false;
+    }
+
     return true;
   } catch (error) {
-    console.error("이메일 전송 실패!", error);
+    console.error("문의사항 저장 중 예외 발생:", error);
     return false;
   }
 };
@@ -72,6 +61,7 @@ export const ContactScreen: React.FC = () => {
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const inputBg = isDark ? "#2A2A2A" : "#FFFFFF";
   const inputText = isDark ? "#FFFFFF" : "#333333";
@@ -101,7 +91,6 @@ export const ContactScreen: React.FC = () => {
         }
       })
       .catch((error) => {
-        console.error("이메일 링크 오류:", error);
         Alert.alert(
           "오류",
           "이메일을 보낼 수 없습니다. 나중에 다시 시도해주세요."
@@ -116,35 +105,52 @@ export const ContactScreen: React.FC = () => {
       return;
     }
 
-    const success = await sendEmailViaEmailJS(name, email, subject, message);
-    if (success) {
-      Alert.alert(
-        "문의가 접수되었습니다",
-        "빠른 시일 내에 답변 드리겠습니다. 감사합니다."
+    setIsSubmitting(true);
+
+    try {
+      const success = await saveInquiryToDatabase(
+        name,
+        email,
+        subject,
+        message
       );
-      // 양식 초기화
-      setName("");
-      setEmail("");
-      setSubject("");
-      setMessage("");
-    } else {
-      // EmailJS 실패 시 사용자에게 선택지 제공
-      Alert.alert(
-        "서버 전송 실패",
-        "이메일 전송 서버에 연결할 수 없습니다. 이메일 앱을 통해 직접 전송하시겠습니까?",
-        [
-          {
-            text: "취소",
-            style: "cancel",
-          },
-          {
-            text: "이메일 앱으로 전송",
-            onPress: () => {
-              sendEmailViaMailto();
+
+      if (success) {
+        Alert.alert(
+          "문의가 접수되었습니다",
+          "빠른 시일 내에 답변 드리겠습니다. 감사합니다."
+        );
+        // 양식 초기화
+        setName("");
+        setEmail("");
+        setSubject("");
+        setMessage("");
+      } else {
+        // 데이터베이스 저장 실패 시 이메일 대안 제공
+        Alert.alert(
+          "서버 전송 실패",
+          "문의사항을 저장할 수 없습니다. 이메일 앱을 통해 직접 전송하시겠습니까?",
+          [
+            {
+              text: "취소",
+              style: "cancel",
             },
-          },
-        ]
+            {
+              text: "이메일 앱으로 전송",
+              onPress: () => {
+                sendEmailViaMailto();
+              },
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        "오류",
+        "문의 처리 중 오류가 발생했습니다. 나중에 다시 시도해주세요."
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -159,19 +165,11 @@ export const ContactScreen: React.FC = () => {
       },
     },
     {
-      icon: "logo-github",
-      label: "GitHub",
-      value: "github.com/ohmyshit",
+      icon: "logo-instagram",
+      label: "인스타그램",
+      value: "@ohmyshit",
       action: () => {
-        Linking.openURL("https://github.com/ohmyshit");
-      },
-    },
-    {
-      icon: "globe-outline",
-      label: "웹사이트",
-      value: "www.ohmyshit.app",
-      action: () => {
-        Linking.openURL("https://www.ohmyshit.app");
+        Linking.openURL("https://instagram.com/ohmyshit");
       },
     },
   ];
@@ -184,7 +182,7 @@ export const ContactScreen: React.FC = () => {
       <ScrollView
         style={[
           styles.container,
-          { backgroundColor: isDark ? "#1A1A1A" : "#FFFFFF" },
+          { backgroundColor: isDark ? "#3D4127" : "#FFFFFF" },
         ]}
         keyboardShouldPersistTaps="handled"
       >
@@ -385,10 +383,19 @@ export const ContactScreen: React.FC = () => {
 
             <TouchableOpacity
               onPress={handleSubmit}
-              style={[styles.submitButton, { backgroundColor: "#636B2F" }]}
+              style={[
+                styles.submitButton,
+                {
+                  backgroundColor: "#636B2F",
+                  opacity: isSubmitting ? 0.7 : 1,
+                },
+              ]}
               activeOpacity={0.7}
+              disabled={isSubmitting}
             >
-              <Text style={styles.submitButtonText}>메시지 보내기</Text>
+              <Text style={styles.submitButtonText}>
+                {isSubmitting ? "처리 중..." : "메시지 보내기"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

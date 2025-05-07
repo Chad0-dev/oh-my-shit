@@ -5,11 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  FlatList,
+  ScrollView,
   Image,
   useColorScheme,
   ActivityIndicator,
+  Alert,
+  Dimensions,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { getAvailableCharacters } from "../../services/characterService";
 import { Character } from "../../types/character";
 
@@ -29,6 +32,8 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const isDark = useColorScheme() === "dark";
+  const { width } = Dimensions.get("window");
+  const characterItemWidth = width * 0.35; // 캐릭터 아이템 너비 줄임
 
   useEffect(() => {
     if (visible) {
@@ -46,6 +51,12 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleShopPress = () => {
+    Alert.alert("알림", "아직 준비 중인 기능입니다.", [
+      { text: "확인", style: "default" },
+    ]);
   };
 
   return (
@@ -96,21 +107,53 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
               </Text>
             </View>
           ) : (
-            <FlatList
-              data={characters}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContainer}
+              snapToInterval={characterItemWidth}
+              decelerationRate="fast"
+            >
+              {/* 상점 아이콘 */}
+              <TouchableOpacity
+                style={[
+                  styles.shopItemContainer,
+                  { backgroundColor: "transparent" },
+                ]}
+                onPress={handleShopPress}
+              >
+                <View style={styles.shopIconContainer}>
+                  <Ionicons
+                    name="add-circle"
+                    size={50}
+                    color={isDark ? "#BAC095" : "#636B2F"}
+                  />
+                </View>
+                <Text
                   style={[
-                    styles.characterItem,
+                    styles.characterName,
+                    { color: isDark ? "#FFFFFF" : "#000000" },
+                  ]}
+                >
+                  상점
+                </Text>
+              </TouchableOpacity>
+
+              {/* 캐릭터 목록 */}
+              {characters.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.characterItemHorizontal,
                     {
-                      backgroundColor: isDark ? "#444444" : "#F5F5F5",
+                      backgroundColor: "transparent",
                       borderColor:
                         currentCharacter === item.id
                           ? isDark
                             ? "#BAC095"
                             : "#636B2F"
                           : "transparent",
+                      width: characterItemWidth,
                     },
                   ]}
                   onPress={() => onSelect(item)}
@@ -129,10 +172,8 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                     {item.name}
                   </Text>
                 </TouchableOpacity>
-              )}
-              numColumns={2}
-              contentContainerStyle={styles.listContainer}
-            />
+              ))}
+            </ScrollView>
           )}
         </View>
       </View>
@@ -149,7 +190,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: "90%",
-    maxHeight: "80%",
+    height: 300,
     borderRadius: 12,
     padding: 20,
   },
@@ -176,24 +217,45 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
   },
-  listContainer: {
-    paddingBottom: 20,
+  scrollContainer: {
+    paddingVertical: 10,
+    paddingRight: 5,
   },
-  characterItem: {
-    flex: 1,
-    margin: 8,
-    padding: 16,
+  characterItemHorizontal: {
+    marginLeft: 3,
+    padding: 10,
     borderRadius: 8,
     alignItems: "center",
+    justifyContent: "center",
     borderWidth: 2,
+    height: 170,
+  },
+  shopItemContainer: {
+    marginLeft: 0,
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+    height: 170,
+    width: 120,
+  },
+  shopIconContainer: {
+    width: 70,
+    height: 70,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 6,
   },
   characterImage: {
-    width: 80,
-    height: 80,
-    marginBottom: 8,
+    width: 100,
+    height: 100,
+    marginBottom: 6,
   },
   characterName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
+    textAlign: "center",
   },
 });

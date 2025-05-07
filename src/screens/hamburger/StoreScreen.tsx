@@ -9,25 +9,25 @@ export const StoreScreen: React.FC = () => {
   // 가상의 스토어 아이템들
   const storeItems = [
     {
+      id: 2,
+      name: "캐릭터 스킨",
+      description: "귀여운 캐릭터를 추가로 구매하세요",
+      price: "준비 중",
+      icon: "person-outline" as keyof typeof Ionicons.glyphMap,
+    },
+    {
       id: 1,
       name: "프리미엄 테마",
       description: "다양한 고급 테마를 적용할 수 있습니다",
       price: "준비 중",
-      icon: "color-palette-outline",
-    },
-    {
-      id: 2,
-      name: "캐릭터 스킨",
-      description: "귀여운 캐릭터 스킨을 추가로 구매하세요",
-      price: "준비 중",
-      icon: "person-outline",
+      icon: "color-palette-outline" as keyof typeof Ionicons.glyphMap,
     },
     {
       id: 3,
-      name: "스페셜 이펙트",
-      description: "특별한 애니메이션 효과를 적용할 수 있습니다",
+      name: "건강식품",
+      description: "배변활동에 도움이 되는 식품 입니다",
       price: "준비 중",
-      icon: "sparkles-outline",
+      icon: "nutrition-outline" as keyof typeof Ionicons.glyphMap,
     },
   ];
 
@@ -35,7 +35,7 @@ export const StoreScreen: React.FC = () => {
     <ScrollView
       style={[
         styles.container,
-        { backgroundColor: isDark ? "#1A1A1A" : "#FFFFFF" },
+        { backgroundColor: isDark ? "#3D4127" : "#FFFFFF" },
       ]}
     >
       {/* 헤더 */}

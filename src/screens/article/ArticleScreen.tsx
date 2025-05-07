@@ -132,15 +132,33 @@ export const ArticleScreen: React.FC = () => {
 
   // 게시물 선택 처리
   const handleArticlePress = async (article: Article) => {
-    setSelectedArticle(article);
-    setModalVisible(true);
-
-    // 조회수 증가
+    // 조회수 증가 로직
     try {
-      await incrementArticleViews(article.id);
+      const success = await incrementArticleViews(article.id);
+      if (success) {
+        // 조회수 증가 성공 시 로컬 상태 업데이트
+        const updatedArticle = { ...article, views: article.views + 1 };
+
+        // 선택된 게시물 업데이트
+        setSelectedArticle(updatedArticle);
+
+        // 게시물 리스트에서도 해당 게시물 업데이트
+        setArticles((prevArticles) =>
+          prevArticles.map((item) =>
+            item.id === article.id ? updatedArticle : item
+          )
+        );
+      } else {
+        // 조회수 증가 실패 시 원본 게시물 사용
+        setSelectedArticle(article);
+      }
     } catch (error) {
-      // 오류 처리
+      console.error("조회수 증가 오류:", error);
+      setSelectedArticle(article);
     }
+
+    // 모달 표시
+    setModalVisible(true);
   };
 
   // 모달 닫기 처리
@@ -152,7 +170,7 @@ export const ArticleScreen: React.FC = () => {
     <View
       style={[
         styles.container,
-        { backgroundColor: isDark ? "#1A1A1A" : "#F5F5F5" },
+        { backgroundColor: isDark ? "#3D4127" : "#F5F5F5" },
       ]}
     >
       {/* 키워드 필터 */}
