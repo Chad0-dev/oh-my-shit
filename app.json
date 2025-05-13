@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "oh-my-shit",
+    "name": "Oh My Sh!t",
     "slug": "oh-my-shit",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,28 +10,42 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#3D4127"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ohmyshit.dev",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "backgroundColor": "#3D4127"
+      },
+      "package": "com.ohmyshit.dev"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-font"],
+    "plugins": [
+      "expo-font"
+    ],
     "fonts": [
       {
         "asset": "./assets/fonts/Pattaya-Regular.ttf",
         "family": "Pattaya"
       }
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a885c728-5d25-4658-aa00-3ae1bfced4cf"
+      }
+    }
   }
 }

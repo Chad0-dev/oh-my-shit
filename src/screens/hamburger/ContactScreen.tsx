@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
+import { useAuthStore } from "../../stores/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../supabase/client";
 
@@ -27,10 +28,11 @@ interface ContactMethod {
 
 // Supabase를 통해 문의사항 저장
 const saveInquiryToDatabase = async (
-  name: string,
-  email: string,
+  name: string | null,
+  email: string | null,
   subject: string,
-  message: string
+  message: string,
+  user_id?: string
 ) => {
   try {
     const { data, error } = await supabase.from("inquiries").insert([
@@ -40,6 +42,7 @@ const saveInquiryToDatabase = async (
         subject: subject || "제목 없음",
         message,
         status: "pending",
+        user_id: user_id || null,
       },
     ]);
 
@@ -57,6 +60,7 @@ const saveInquiryToDatabase = async (
 
 export const ContactScreen: React.FC = () => {
   const { isDark } = useThemeStore();
+  const { user } = useAuthStore();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
@@ -110,9 +114,10 @@ export const ContactScreen: React.FC = () => {
     try {
       const success = await saveInquiryToDatabase(
         name,
-        email,
+        email || (user ? user.email : null),
         subject,
-        message
+        message,
+        user ? user.id : undefined
       );
 
       if (success) {

@@ -26,8 +26,9 @@
 # 필요한 패키지 설치
 npm install
 
-# Supabase URL 및 Anon Key 설정
-# src/supabase/client.ts 파일에서 Supabase URL과 Anon Key 설정
+# .env 파일 생성
+# EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+# EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 2. 개발 서버 실행
@@ -47,13 +48,35 @@ npm run web
 - 다크 모드와 라이트 모드 지원
 - 귀여운 캐릭터와 깔끔한 UI 제공
 
-## 배포 계획 (예정)
+## 앱스토어 배포 준비
 
-- 배경 및 캐릭터 구매 기능
-- 광고 제거 기능
-- 푸시 알림 기능
-- 배변 관련 아티클, 식품 정보 제공
-- 인근 병원/약국 위치 안내
+1. **빌드 설정**
+
+   - `eas.json` 파일에서 iOS/Android 빌드 설정 확인
+   - 환경 변수를 EAS Secret에 설정: `eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "your_value"`
+
+2. **애플 앱스토어 배포**
+
+   - Apple Developer 계정 필요
+   - App Store Connect에 앱 등록 필요
+   - 다음 명령어로 빌드 및 제출: `eas build --platform ios --profile production && eas submit -p ios`
+
+3. **구글 플레이스토어 배포**
+   - Google Play Console 계정 필요
+   - 서비스 계정 키(serviceAccountKey.json) 설정 필요
+   - 다음 명령어로 빌드 및 제출: `eas build --platform android --profile production && eas submit -p android`
+
+## 배포 전 체크리스트
+
+- [ ] app.json과 package.json의 앱 정보 일치 확인
+- [ ] Android/iOS 번들 ID 및 패키지명 설정 확인
+- [ ] 환경 변수 설정 (Supabase URL, Anon Key 등)
+- [ ] 앱 아이콘 및 스플래시 이미지 설정
+- [ ] Android 서비스 계정 키 설정
+- [ ] iOS 인증서 및 프로비저닝 프로필 설정
+- [ ] 프라이버시 정책 URL 추가
+- [ ] 스크린샷 및 앱 설명 준비
+- [ ] 앱 내 약관 및 개인정보처리방침 추가
 
 ## 프로젝트 구조
 
