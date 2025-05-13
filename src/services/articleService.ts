@@ -1,5 +1,6 @@
 import { supabase } from "../supabase/client";
 import { Article } from "../components/article/ArticleCard";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Supabase에서 반환되는 건강 정보 게시글 타입
 interface HealthArticleRecord {
@@ -13,6 +14,16 @@ interface HealthArticleRecord {
   updated_at: string;
 }
 
+// 캐싱 관련 키
+const ARTICLES_CACHE_KEY = "articles_cache";
+const ARTICLES_CACHE_EXPIRY_KEY = "articles_cache_expiry";
+const ARTICLES_CACHE_VERSION_KEY = "articles_cache_version";
+const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1시간
+const CACHE_VERSION = "1.0"; // 캐시 버전 - API 응답 구조가 변경되면 이 값을 변경
+
+// 페이징 기본 값
+const DEFAULT_PAGE_SIZE = 10;
+
 // Supabase 인증 오류 로깅 및 처리
 const handleSupabaseError = (error: any, operation: string) => {
   if (error?.message?.includes("Invalid Refresh Token")) {
@@ -20,6 +31,136 @@ const handleSupabaseError = (error: any, operation: string) => {
     return true;
   }
   return false;
+};
+
+// 캐싱된 데이터인지 확인하는 함수
+const isCacheValid = async (): Promise<boolean> => {
+  try {
+    // 캐시 버전 확인
+    const cacheVersion = await AsyncStorage.getItem(ARTICLES_CACHE_VERSION_KEY);
+    if (cacheVersion !== CACHE_VERSION) {
+      return false;
+    }
+
+    // 캐시 만료 시간 확인
+    const expiryTimeStr = await AsyncStorage.getItem(ARTICLES_CACHE_EXPIRY_KEY);
+    if (!expiryTimeStr) return false;
+
+    const expiryTime = parseInt(expiryTimeStr, 10);
+    return Date.now() < expiryTime;
+  } catch (error) {
+    console.error("캐시 유효성 확인 오류:", error);
+    return false;
+  }
+};
+
+// 캐시 저장 함수
+const saveCache = async (data: any): Promise<void> => {
+  try {
+    const expiryTime = Date.now() + CACHE_EXPIRY_MS;
+    await AsyncStorage.setItem(ARTICLES_CACHE_KEY, JSON.stringify(data));
+    await AsyncStorage.setItem(
+      ARTICLES_CACHE_EXPIRY_KEY,
+      expiryTime.toString()
+    );
+    await AsyncStorage.setItem(ARTICLES_CACHE_VERSION_KEY, CACHE_VERSION);
+  } catch (error) {
+    console.error("캐시 저장 오류:", error);
+  }
+};
+
+// 캐시 가져오기 함수
+const getCache = async (): Promise<any | null> => {
+  try {
+    const isValid = await isCacheValid();
+    if (!isValid) return null;
+
+    const cachedDataStr = await AsyncStorage.getItem(ARTICLES_CACHE_KEY);
+    if (!cachedDataStr) return null;
+
+    return JSON.parse(cachedDataStr);
+  } catch (error) {
+    console.error("캐시 가져오기 오류:", error);
+    return null;
+  }
+};
+
+// 캐시 초기화 함수
+export const clearArticlesCache = async (): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(ARTICLES_CACHE_KEY);
+    await AsyncStorage.removeItem(ARTICLES_CACHE_EXPIRY_KEY);
+  } catch (error) {
+    console.error("캐시 초기화 오류:", error);
+  }
+};
+
+/**
+ * 아티클 목록을 가져오는 함수 (페이징 및 캐싱 지원)
+ * @param page 페이지 번호 (1부터 시작)
+ * @param pageSize 페이지당 항목 수
+ * @param forceRefresh 강제 새로고침 여부
+ * @returns 아티클 목록과 페이징 정보
+ */
+export const getArticles = async (
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  forceRefresh = false
+): Promise<{
+  articles: any[];
+  totalCount: number;
+  hasMore: boolean;
+}> => {
+  try {
+    // 캐시 확인 (강제 새로고침이 아닌 경우)
+    if (!forceRefresh) {
+      const cachedData = await getCache();
+      if (
+        cachedData &&
+        cachedData.page === page &&
+        cachedData.pageSize === pageSize
+      ) {
+        return cachedData;
+      }
+    }
+
+    // 시작 인덱스 계산
+    const startIndex = (page - 1) * pageSize;
+
+    // 총 개수 가져오기
+    const { count, error: countError } = await supabase
+      .from("articles")
+      .select("*", { count: "exact", head: true });
+
+    if (countError) throw countError;
+
+    const totalCount = count || 0;
+
+    // 페이지별 데이터 가져오기
+    const { data, error } = await supabase
+      .from("articles")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(startIndex, startIndex + pageSize - 1);
+
+    if (error) throw error;
+
+    const result = {
+      articles: data || [],
+      totalCount,
+      hasMore: startIndex + pageSize < totalCount,
+      page,
+      pageSize,
+    };
+
+    // 캐시 저장
+    await saveCache(result);
+
+    return result;
+  } catch (error) {
+    console.error("아티클 목록 가져오기 오류:", error);
+    throw error;
+  }
 };
 
 // 모든 건강 정보 게시글 가져오기

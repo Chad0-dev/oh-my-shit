@@ -1,60 +1,54 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTimerStore } from "../../stores/timerStore";
+import { useThemeStore } from "../../stores/themeStore";
 
-export const Timer = () => {
-  const { isRunning, getElapsed, resetSignal, totalTime, setTimerComplete } =
-    useTimerStore();
-  const [displayTime, setDisplayTime] = useState("05:00");
-  const [prevRemaining, setPrevRemaining] = useState(300);
+// 시간을 포맷팅하는 함수
+const formatTime = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes < 10 ? "0" : ""}${minutes}:${
+    remainingSeconds < 10 ? "0" : ""
+  }${remainingSeconds}`;
+};
 
-  // resetSignal이 변경되면 타이머 표시 시간 초기화
-  React.useEffect(() => {
-    updateDisplayTime();
-  }, [resetSignal]);
+export const Timer = React.memo(() => {
+  const { isRunning, totalTime, getElapsed, resultState } = useTimerStore(
+    (state) => ({
+      isRunning: state.isRunning,
+      totalTime: state.totalTime,
+      getElapsed: state.getElapsed,
+      resultState: state.resultState,
+    })
+  );
+  const { isDark } = useThemeStore((state) => ({ isDark: state.isDark }));
 
-  // 타이머 표시 업데이트 함수
-  const updateDisplayTime = () => {
-    const totalSeconds = getElapsed();
-    const remainingSeconds = Math.max(0, totalTime - totalSeconds);
+  // 경과 시간 계산
+  const elapsedSeconds = useMemo(() => getElapsed(), [getElapsed]);
 
-    // 이전 남은 시간과 현재 남은 시간을 비교하여 0이 되었을 때 이벤트 발생
-    if (prevRemaining > 0 && remainingSeconds === 0 && isRunning) {
-      setTimerComplete(true);
-    }
+  // 남은 시간 계산
+  const remainingTime = useMemo(
+    () => Math.max(0, totalTime - elapsedSeconds),
+    [totalTime, elapsedSeconds]
+  );
 
-    setPrevRemaining(remainingSeconds);
+  // 포맷된 시간을 메모이제이션
+  const formattedTime = useMemo(
+    () => formatTime(remainingTime),
+    [remainingTime]
+  );
 
-    const minutes = Math.floor(remainingSeconds / 60);
-    const seconds = remainingSeconds % 60;
-
-    const formattedMinutes = String(minutes).padStart(2, "0");
-    const formattedSeconds = String(seconds).padStart(2, "0");
-    setDisplayTime(`${formattedMinutes}:${formattedSeconds}`);
-  };
-
-  // 타이머 실행 중일 때 1초마다 업데이트
-  useEffect(() => {
-    updateDisplayTime();
-
-    let interval: NodeJS.Timeout;
-    if (isRunning) {
-      interval = setInterval(() => {
-        updateDisplayTime();
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning, getElapsed, totalTime]);
+  // 텍스트 색상
+  const textColor = useMemo(() => (isDark ? "#FFFFFF" : "#636B2F"), [isDark]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.timerText}>{displayTime}</Text>
+      <Text style={[styles.timerText, { color: textColor }]}>
+        {formattedTime}
+      </Text>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -65,6 +59,5 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 72,
     fontWeight: "bold",
-    color: "#636B2F",
   },
 });

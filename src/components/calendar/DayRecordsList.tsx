@@ -1,7 +1,12 @@
 import React, { useMemo, useCallback } from "react";
-import { TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import {
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+  FlatList,
+} from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
-import { StyledText, StyledView, StyledScrollView } from "../../utils/styled";
+import { StyledText, StyledView } from "../../utils/styled";
 import { DisplayRecord } from "../../types/calendar";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -76,7 +81,12 @@ export const DayRecordsList: React.FC<DayRecordsListProps> = ({
       );
     }
 
-    return selectedDayRecords.map((record) => (
+    return selectedDayRecords;
+  }, [selectedDayRecords, isLoading, colors]);
+
+  // 개별 레코드 렌더링 함수
+  const renderRecordItem = useCallback(
+    ({ item: record }: { item: DisplayRecord }) => (
       <StyledView
         key={record.id}
         className={`p-3 mb-2 rounded-md ${colors.cardBg}`}
@@ -121,8 +131,33 @@ export const DayRecordsList: React.FC<DayRecordsListProps> = ({
           </StyledText>
         )}
       </StyledView>
-    ));
-  }, [selectedDayRecords, isLoading, colors, handleDelete]);
+    ),
+    [colors, handleDelete]
+  );
+
+  // EmptyContent 컴포넌트
+  const EmptyContent = useCallback(
+    () => (
+      <StyledView className="items-center justify-center py-8">
+        <StyledText className={`text-center ${colors.emptyColor}`}>
+          등록된 기록이 없습니다.
+        </StyledText>
+      </StyledView>
+    ),
+    [colors]
+  );
+
+  // LoadingContent 컴포넌트
+  const LoadingContent = useCallback(
+    () => (
+      <ActivityIndicator
+        size="large"
+        color={colors.loaderColor}
+        className="my-4"
+      />
+    ),
+    [colors]
+  );
 
   // selectedDate가 없으면 아무것도 렌더링하지 않음
   if (!selectedDate) {
@@ -143,13 +178,24 @@ export const DayRecordsList: React.FC<DayRecordsListProps> = ({
         </TouchableOpacity>
       </StyledView>
 
-      <StyledScrollView
-        style={styles.scrollView}
-        className="px-4"
-        showsVerticalScrollIndicator={true}
-      >
-        {recordsList}
-      </StyledScrollView>
+      {isLoading ? (
+        <LoadingContent />
+      ) : (
+        <FlatList
+          data={selectedDayRecords}
+          keyExtractor={(item) => item.id}
+          renderItem={renderRecordItem}
+          ListEmptyComponent={EmptyContent}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+          showsVerticalScrollIndicator={true}
+          style={styles.scrollView}
+          windowSize={5}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={10}
+        />
+      )}
     </StyledView>
   );
 };

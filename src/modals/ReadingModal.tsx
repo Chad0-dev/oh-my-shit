@@ -64,12 +64,12 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({
       ad.url &&
       (ad.url.startsWith("http://") || ad.url.startsWith("https://"))
     ) {
-      return `${ad.url}?t=${new Date().getTime()}`;
+      return ad.url;
     }
 
     // 이미지 경로(ad/image.jpg)가 있는 경우 수파베이스 스토리지 URL 생성
     const imagePath = ad.image_path || ad.url;
-    return `${SUPABASE_URL}/storage/v1/object/public/${imagePath}?t=${new Date().getTime()}`;
+    return `${SUPABASE_URL}/storage/v1/object/public/${imagePath}`;
   };
 
   // 수파베이스에서 광고 데이터 가져오기

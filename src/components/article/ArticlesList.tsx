@@ -84,6 +84,11 @@ export const ArticlesList: React.FC<ArticlesListProps> = ({
           />
         ) : undefined
       }
+      windowSize={5}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      updateCellsBatchingPeriod={50}
+      initialNumToRender={10}
     />
   );
 };

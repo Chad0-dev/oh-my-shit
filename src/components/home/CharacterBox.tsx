@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -13,16 +13,21 @@ import { useTimerStore } from "../../stores/timerStore";
 import { useCharacterStore } from "../../stores/characterStore";
 import { getCharacterImageUrl } from "../../services/characterService";
 import { useProfileStore } from "../../stores/profileStore";
+import { getBlurredImageUrl } from "../../services/imagePreloadService";
 
 const { width, height } = Dimensions.get("window");
 
 // 캐릭터 상태 타입 정의
 type CharacterState = "normal" | "pooping" | "success" | "fail";
 
-export const CharacterBox = () => {
-  // resultState 직접 구독 추가
-  const { isRunning, buttonState, resultState, setResultState } =
-    useTimerStore();
+export const CharacterBox = React.memo(() => {
+  // 필요한 상태만 정확히 구독하여 불필요한 리렌더링 방지
+  const { isRunning, resultState, setResultState } = useTimerStore((state) => ({
+    isRunning: state.isRunning,
+    resultState: state.resultState,
+    setResultState: state.setResultState,
+  }));
+
   const {
     selectedCharacter,
     characterImages,
@@ -30,13 +35,21 @@ export const CharacterBox = () => {
     setCurrentState,
     isLoading: characterLoading,
     initializeImageUrls,
-  } = useCharacterStore();
-  const { character: profileCharacter } = useProfileStore();
+  } = useCharacterStore((state) => ({
+    selectedCharacter: state.selectedCharacter,
+    characterImages: state.characterImages,
+    currentState: state.currentState,
+    setCurrentState: state.setCurrentState,
+    isLoading: state.isLoading,
+    initializeImageUrls: state.initializeImageUrls,
+  }));
+
+  const profileCharacter = useProfileStore((state) => state.character);
 
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 프로필의 캐릭터 정보로 characterStore 초기화
+  // 프로필의 캐릭터 정보로 characterStore 초기화 (의존성 배열 최적화)
   useEffect(() => {
     const initializeCharacter = async () => {
       setIsLoading(true);
@@ -64,19 +77,19 @@ export const CharacterBox = () => {
           useCharacterStore.getState().setSelectedCharacter(characterInfo);
         } else {
           // 이미 올바른 캐릭터가 선택되어 있으면 이미지만 초기화
-          initializeImageUrls();
+          await initializeImageUrls();
         }
       } catch (error) {
-        // 오류 처리
+        console.error("캐릭터 초기화 오류:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     initializeCharacter();
-  }, [profileCharacter]);
+  }, [profileCharacter]); // 프로필 캐릭터만 의존성으로 지정
 
-  // 상태 변경 감지 및 characterStore 동기화
+  // 상태 변경 감지 및 characterStore 동기화 (의존성 배열 최적화)
   useEffect(() => {
     let newState: CharacterState = "normal";
 
@@ -90,45 +103,74 @@ export const CharacterBox = () => {
       newState = "normal";
     }
 
-    // 캐릭터 스토어의 상태 업데이트
-    setCurrentState(newState);
-  }, [isRunning, resultState, buttonState]);
+    // 현재 상태와 다를 때만 업데이트하여 불필요한 상태 변경 방지
+    if (newState !== currentState) {
+      setCurrentState(newState);
+    }
+  }, [isRunning, resultState, currentState, setCurrentState]);
 
-  // 펄스 애니메이션
+  // 펄스 애니메이션 - 최적화 (useCallback 사용)
+  const startPulseAnimation = useCallback(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulseAnim]);
+
+  const stopPulseAnimation = useCallback(() => {
+    pulseAnim.setValue(1);
+    Animated.timing(pulseAnim, {
+      toValue: 1,
+      duration: 0,
+      useNativeDriver: true,
+    }).stop();
+  }, [pulseAnim]);
+
+  // 펄스 애니메이션 최적화
   useEffect(() => {
     if (isRunning) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.05,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+      startPulseAnimation();
     } else {
-      pulseAnim.setValue(1);
-      pulseAnim.stopAnimation();
+      stopPulseAnimation();
     }
-  }, [isRunning]);
 
-  // 캐릭터 클릭 핸들러
-  const handleCharacterPress = () => {
+    return () => {
+      stopPulseAnimation();
+    };
+  }, [isRunning, startPulseAnimation, stopPulseAnimation]);
+
+  // 캐릭터 클릭 핸들러 (useCallback으로 최적화)
+  const handleCharacterPress = useCallback(() => {
     if (isRunning) {
       return;
     }
 
     setResultState(null);
     setCurrentState("normal");
-  };
+  }, [isRunning, setResultState, setCurrentState]);
 
-  // 현재 이미지 URL
-  const currentImageUrl = characterImages?.[currentState] || "";
+  // 현재 이미지 URL (useMemo로 최적화)
+  const currentImageUrl = useMemo(
+    () => characterImages?.[currentState] || "",
+    [characterImages, currentState]
+  );
+
+  // 블러 이미지 URL
+  const blurredImageUrl = useMemo(
+    () => (currentImageUrl ? getBlurredImageUrl(currentImageUrl) : ""),
+    [currentImageUrl]
+  );
+
   const isLoadingState = isLoading || characterLoading || !currentImageUrl;
 
   return (
@@ -158,13 +200,17 @@ export const CharacterBox = () => {
               contentFit="contain"
               cachePolicy="memory-disk"
               transition={300}
+              recyclingKey={`${selectedCharacter?.id}-${currentState}`}
+              priority="high"
+              placeholder={{ uri: blurredImageUrl }}
+              placeholderContentFit="contain"
             />
           </View>
         )}
       </Animated.View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -1,20 +1,14 @@
 import { create } from "zustand";
 import { Character } from "../types/character";
 import { getCharacterImageUrl } from "../services/characterService";
+import { preloadCharacterStateImages } from "../services/imagePreloadService";
 
 type CharacterStateType = "normal" | "pooping" | "success" | "fail";
 
-// 디버깅용 상수
-const DEBUG = false;
-
-/**
- * 디버깅 로그를 출력하는 함수
- */
-const debugLog = (message: string, data?: any) => {
-  if (DEBUG) {
-    console.log(`[DEBUG:CharacterStore] ${message}`, data || "");
-  }
-};
+// 캐릭터 이미지 로드 상태 추적
+interface ImageLoadingState {
+  [key: string]: boolean;
+}
 
 interface CharacterState {
   selectedCharacter: Character | null;
@@ -47,22 +41,8 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     // 캐릭터가 변경되면 로딩 상태 초기화 및 즉시 이미지 초기화 시작
     set({ isLoading: true, error: null });
 
-    // 기본 이미지 즉시 업데이트
-    getCharacterImageUrl(character.id, "normal")
-      .then((url) => {
-        set((state) => ({
-          characterImages: {
-            ...state.characterImages,
-            normal: url,
-          },
-        }));
-
-        // 다른 상태의 이미지도 자동으로 초기화
-        get().initializeImageUrls();
-      })
-      .catch((error) => {
-        set({ isLoading: false, error: "이미지 로드 실패" });
-      });
+    // 캐릭터 변경 시 모든 이미지를 한 번에 로드하도록 변경
+    get().initializeImageUrls();
   },
   updateCharacterImages: async (state) => {
     const currentCharacter = useCharacterStore.getState().selectedCharacter;
@@ -74,14 +54,24 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     try {
       const imageUrl = await getCharacterImageUrl(currentCharacter.id, state);
 
+      // 이전 이미지와 같으면 업데이트하지 않음 (불필요한 리렌더링 방지)
+      const prevImages = useCharacterStore.getState().characterImages;
+      if (prevImages[state] === imageUrl) {
+        return;
+      }
+
       set((prev) => ({
         characterImages: { ...prev.characterImages, [state]: imageUrl },
       }));
     } catch (error) {
-      // 에러 처리
+      // 조용히 오류 처리
     }
   },
   setCurrentState: (state) => {
+    // 현재 상태와 같으면 업데이트하지 않음 (불필요한 리렌더링 방지)
+    if (get().currentState === state) {
+      return;
+    }
     set({ currentState: state });
   },
   initializeImageUrls: async () => {
@@ -96,41 +86,39 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         return;
       }
 
+      // 이제 preloadCharacterStateImages를 사용하여 이미지를 사전 로드
+      const imageUrls = await preloadCharacterStateImages(currentCharacter.id);
+
+      // 이전 이미지와 비교하여 변경되었을 때만 업데이트 (불필요한 리렌더링 방지)
+      const prevImages = get().characterImages;
+      let hasChanges = false;
+
       const states: CharacterStateType[] = [
         "normal",
         "pooping",
         "success",
         "fail",
       ];
-      const imageUrls: Record<CharacterStateType, string> = {
-        normal: "",
-        pooping: "",
-        success: "",
-        fail: "",
-      };
-
-      // 순차적으로 이미지 URL 가져오기
       for (const state of states) {
-        try {
-          const url = await getCharacterImageUrl(currentCharacter.id, state);
-          imageUrls[state] = url;
-        } catch (error) {
-          // 개별 상태 실패 시 더미 URL 설정
-          imageUrls[
-            state
-          ] = `https://placehold.co/400x400/FF6B6B/FFF?text=${currentCharacter.id}-${state}`;
+        if (prevImages[state] !== imageUrls[state]) {
+          hasChanges = true;
+          break;
         }
       }
 
-      set({ characterImages: imageUrls, isLoading: false });
+      if (hasChanges) {
+        set({
+          characterImages: imageUrls as Record<CharacterStateType, string>,
+          isLoading: false,
+        });
+      } else {
+        set({ isLoading: false });
+      }
     } catch (error) {
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : "이미지 로딩 중 오류가 발생했습니다.";
+      // 오류 발생 시 조용히 처리하되, 상태는 업데이트
       set({
         isLoading: false,
-        error: errorMsg,
+        error: "이미지 로딩 중 오류가 발생했습니다.",
       });
     } finally {
       // 로딩 상태 강제 종료 (항상 로딩 완료되도록)

@@ -39,7 +39,7 @@ export const getCharacterImageUrl = async (
       throw new Error(`이미지 URL이 없습니다: ${characterId}/${imageName}.png`);
     }
 
-    return `${data.publicUrl}?t=${new Date().getTime()}`;
+    return data.publicUrl;
   } catch (error) {
     // 에러 발생 시 더미 이미지 URL 반환
     return `https://placehold.co/400x400/FF6B6B/FFF?text=${characterId}-${state}`;
@@ -104,7 +104,7 @@ export const getAvailableCharacters = async () => {
             return {
               id: folder.name,
               name: folder.name.charAt(0).toUpperCase() + folder.name.slice(1),
-              imageUrl: `${data.publicUrl}?t=${new Date().getTime()}`,
+              imageUrl: data.publicUrl,
             };
           } catch (error) {
             return null;
