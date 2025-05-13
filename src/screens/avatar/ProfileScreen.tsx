@@ -26,9 +26,6 @@ import { getCharacterImageUrl } from "../../services/characterService";
 import { Character } from "../../types/character";
 import { useCharacterStore } from "../../stores/characterStore";
 
-// 캐릭터 타입 정의 제거 (Character 인터페이스 사용)
-const characterOptions: Character[] = [];
-
 export const ProfileScreen: React.FC = () => {
   const { isDark } = useThemeStore();
   const { user } = useAuthStore();
@@ -75,6 +72,7 @@ export const ProfileScreen: React.FC = () => {
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") {
+        console.error("프로필 로드 오류:", error.message);
         return;
       }
 
@@ -157,9 +155,13 @@ export const ProfileScreen: React.FC = () => {
           created_at: new Date(),
           updated_at: new Date(),
         });
+
+        if (insertError) {
+          console.error("프로필 생성 오류:", insertError.message);
+        }
       }
     } catch (error) {
-      // 오류 처리
+      console.error("프로필 로드 중 예외 발생:", error);
     } finally {
       setIsLoadingCharacters(false); // 로딩 상태 종료
     }
@@ -179,12 +181,14 @@ export const ProfileScreen: React.FC = () => {
         .eq("user_id", user.id);
 
       if (error) {
+        console.error("캐릭터 업데이트 오류:", error.message);
         throw error;
       }
 
       setCharacterSelectModalVisible(false);
     } catch (error) {
-      // 오류 처리
+      console.error("캐릭터 선택 중 오류:", error);
+      Alert.alert("오류", "캐릭터 선택 중 문제가 발생했습니다.");
     }
   };
 
@@ -217,7 +221,7 @@ export const ProfileScreen: React.FC = () => {
         return false;
       }
     } catch (error) {
-      // 오류 처리
+      console.error("이미지 업로드 중 오류:", error);
       setIsUploading(false);
       Alert.alert("업로드 실패", "이미지 처리 중 오류가 발생했습니다.");
       return false;
@@ -249,7 +253,7 @@ export const ProfileScreen: React.FC = () => {
         await processImageUpload(imageUri);
       }
     } catch (error) {
-      // 오류 처리
+      console.error("이미지 선택 중 오류:", error);
       setIsUploading(false);
       Alert.alert("오류", "이미지 선택 중 문제가 발생했습니다.");
     }
@@ -274,47 +278,40 @@ export const ProfileScreen: React.FC = () => {
         return null;
       }
 
-      // 파일을 Base64로 읽기 (바이너리로 전송하기 위해)
-      const fileContent = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
+      // Supabase에서 제공하는 업로드 URL 가져오기
+      const { data, error } = await supabase.storage
+        .from("avatar")
+        .createSignedUploadUrl(filePath);
+
+      if (error) {
+        throw new Error(`서명된 URL 생성 실패: ${error.message}`);
+      }
+
+      const { signedUrl, path } = data;
+
+      // 파일 직접 업로드 (FileSystem.uploadAsync 사용)
+      const uploadResult = await FileSystem.uploadAsync(signedUrl, uri, {
+        httpMethod: "PUT",
+        headers: {
+          "Content-Type": `image/${fileExt}`,
+        },
       });
 
-      // 단순화된 업로드 방식 - Supabase 클라이언트 직접 사용
-      try {
-        const { data, error } = await supabase.storage
-          .from("avatar")
-          .upload(filePath, decode(fileContent), {
-            contentType: `image/${fileExt}`,
-            upsert: true,
-          });
-
-        if (error) {
-          throw new Error(`업로드 실패: ${error.message}`);
-        }
-
-        // 업로드된 이미지의 공개 URL 가져오기
-        const { data: urlData } = supabase.storage
-          .from("avatar")
-          .getPublicUrl(filePath);
-
-        return urlData?.publicUrl || null;
-      } catch (error) {
-        throw error;
+      if (uploadResult.status !== 200) {
+        throw new Error(`업로드 실패: HTTP 상태 ${uploadResult.status}`);
       }
+
+      // 업로드된 이미지의 공개 URL 가져오기
+      const { data: urlData } = supabase.storage
+        .from("avatar")
+        .getPublicUrl(path);
+
+      return urlData?.publicUrl || null;
     } catch (error) {
+      console.error("파일 시스템 업로드 오류:", error);
       throw error;
     }
   };
-
-  // Base64 디코딩 유틸리티 함수
-  function decode(base64: string): Uint8Array {
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-  }
 
   // 생년월일 선택 처리
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -365,6 +362,7 @@ export const ProfileScreen: React.FC = () => {
         .eq("user_id", user.id);
 
       if (error) {
+        console.error("프로필 업데이트 오류:", error.message);
         throw error;
       }
 
@@ -380,6 +378,7 @@ export const ProfileScreen: React.FC = () => {
       setIsEditing(false);
       Alert.alert("성공", "프로필이 업데이트되었습니다.");
     } catch (error) {
+      console.error("프로필 저장 중 오류:", error);
       Alert.alert("오류", "프로필 업데이트 중 오류가 발생했습니다.");
     }
   };

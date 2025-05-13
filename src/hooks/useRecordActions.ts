@@ -7,6 +7,7 @@ import {
   ShitRecord,
   saveShitRecord,
   deleteShitRecord,
+  forceDeleteShitRecord,
 } from "../services/recordService";
 import {
   generateCalendarData,
@@ -183,9 +184,18 @@ export const useRecordActions = ({
 
       setIsDeleteLoading(true);
       try {
-        const { error } = await deleteShitRecord(id);
+        // 일반적인 삭제 시도
+        const { error, success } = await deleteShitRecord(id);
 
-        if (error) throw error;
+        // 일반 삭제가 실패한 경우
+        if (error) {
+          // 강제 삭제 시도
+          const forceResult = await forceDeleteShitRecord(id);
+
+          if (forceResult.error) {
+            throw forceResult.error;
+          }
+        }
 
         // 데이터 다시 불러오기
         await fetchDailyRecords();

@@ -171,7 +171,6 @@ export const useCalendarState = () => {
   // 실제 기록 삭제 함수는 외부에서 주입받아야 함
   const handleDeleteRecord = useCallback((id: string) => {
     // 이 함수는 캘린더 스크린에서 오버라이딩됨
-    console.log("Delete record:", id);
   }, []);
 
   return {

@@ -159,7 +159,7 @@ export const CalendarScreen: React.FC = () => {
         selectedDayRecords={selectedDayRecords}
         isLoading={isLoading}
         onPressAdd={openAddModal}
-        onPressDelete={confirmDeleteRecord}
+        onPressDelete={recordActions.handleDeleteRecord}
       />
 
       {/* 기록 추가 모달 */}

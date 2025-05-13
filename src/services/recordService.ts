@@ -1,4 +1,5 @@
 import { supabase } from "../supabase/client";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase/config";
 
 // 배변 기록 데이터 타입 정의
 export type AmountType = "많음" | "보통" | "적음" | "이상";
@@ -287,12 +288,39 @@ export const getHourlySuccessfulRecords = async (
  */
 export const deleteShitRecord = async (recordId: string) => {
   try {
-    const { error } = await supabase
+    // Supabase 클라이언트를 사용하여 삭제
+    const { error, count } = await supabase
       .from("shit_records")
       .delete()
       .eq("id", recordId);
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, error: null };
+  } catch (error: any) {
+    return { success: false, error };
+  }
+};
+
+/**
+ * 관리자 권한으로 배변 기록을 강제 삭제하는 함수
+ * @param recordId 삭제할 기록 ID
+ * @returns 삭제 결과
+ */
+export const forceDeleteShitRecord = async (recordId: string) => {
+  try {
+    // Supabase 클라이언트로 삭제
+    const { error, count } = await supabase
+      .from("shit_records")
+      .delete()
+      .eq("id", recordId);
+
+    if (error) {
+      throw error;
+    }
+
     return { success: true, error: null };
   } catch (error: any) {
     return { success: false, error };

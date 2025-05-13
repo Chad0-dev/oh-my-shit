@@ -3,6 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
 
+console.log("[Supabase] 설정 확인:", {
+  URL: SUPABASE_URL,
+  ANON_KEY_PREFIX: SUPABASE_ANON_KEY.substring(0, 10) + "...",
+});
+
 // Supabase 클라이언트 생성
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -23,6 +28,18 @@ console.log("[Supabase] 클라이언트 초기화:", {
   url: SUPABASE_URL,
   hasAnonKey: !!SUPABASE_ANON_KEY,
   storage: supabase.storage,
+});
+
+// 클라이언트 액세스 테스트
+supabase.auth.getSession().then(({ data, error }) => {
+  if (error) {
+    console.warn("[Supabase] 세션 확인 오류:", error.message);
+  } else {
+    console.log("[Supabase] 세션 상태:", {
+      hasSession: !!data.session,
+      userLoggedIn: !!data.session?.user,
+    });
+  }
 });
 
 // 세션 상태 확인 함수
