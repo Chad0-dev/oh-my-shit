@@ -39,7 +39,7 @@ const logDebug = (message: string, data?: any) => {
  * @param url 원본 이미지 URL
  * @returns 최적화된 이미지 URL
  */
-const optimizeImageUrl = (url: string): string => {
+export const optimizeImageUrl = (url: string): string => {
   if (!url || !url.includes("supabase")) return url;
 
   const size = getOptimalImageSize();
@@ -80,7 +80,8 @@ export const preloadCharacterStateImages = async (
       try {
         const url = await getCharacterImageUrl(characterId, state);
         // 최적화된 URL 반환
-        return { state, url: optimizeImageUrl(url) };
+        const optimizedUrl = optimizeImageUrl(url);
+        return { state, url: optimizedUrl };
       } catch (error) {
         // 조용히 실패 처리
         return { state, url: "" };

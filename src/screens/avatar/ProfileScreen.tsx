@@ -25,6 +25,7 @@ import { CharacterSelectModal } from "../../components/character/CharacterSelect
 import { getCharacterImageUrl } from "../../services/characterService";
 import { Character } from "../../types/character";
 import { useCharacterStore } from "../../stores/characterStore";
+import { optimizeImageUrl } from "../../services/imagePreloadService";
 
 export const ProfileScreen: React.FC = () => {
   const { isDark } = useThemeStore();
@@ -96,34 +97,76 @@ export const ProfileScreen: React.FC = () => {
         // 캐릭터 설정
         if (data.character_type) {
           try {
+            // 캐릭터 타입을 소문자로 변환하여 일관성 유지
+            const characterType = data.character_type.toLowerCase();
+
+            // CharacterBox에서 사용하는 것과 동일한 방식으로 이미지 URL 가져오기
+            const imageUrl = await getCharacterImageUrl(
+              characterType,
+              "normal"
+            );
+
+            // 이미지 URL 최적화 (CharacterBox와 동일한 방식)
+            const optimizedImageUrl = optimizeImageUrl(imageUrl);
+
             const character: Character = {
-              id: data.character_type,
+              id: characterType,
               name:
-                data.character_type.charAt(0).toUpperCase() +
-                data.character_type.slice(1),
-              imageUrl: await getCharacterImageUrl(
-                data.character_type,
-                "normal"
-              ),
+                characterType.charAt(0).toUpperCase() + characterType.slice(1),
+              imageUrl: optimizedImageUrl,
             };
+
+            // 홈 화면과 동일한 상태 관리를 위해 스토어를 먼저 업데이트
+            useCharacterStore.getState().setSelectedCharacter(character);
+
+            // 로컬 상태도 업데이트
             setSelectedCharacter(character);
           } catch (error) {
+            console.error("캐릭터 이미지 로드 오류:", error);
             // 기본 캐릭터로 대체
-            const character: Character = {
-              id: "basic",
-              name: "Basic",
-              imageUrl: await getCharacterImageUrl("basic", "normal"),
-            };
-            setSelectedCharacter(character);
+            try {
+              const imageUrl = await getCharacterImageUrl("basic", "normal");
+
+              // 기본 캐릭터 이미지도 최적화
+              const optimizedImageUrl = optimizeImageUrl(imageUrl);
+
+              const character: Character = {
+                id: "basic",
+                name: "Basic",
+                imageUrl: optimizedImageUrl,
+              };
+
+              // 홈 화면과 동일한 상태 관리를 위해 스토어를 먼저 업데이트
+              useCharacterStore.getState().setSelectedCharacter(character);
+
+              // 로컬 상태도 업데이트
+              setSelectedCharacter(character);
+            } catch (error) {
+              console.error("기본 캐릭터 로드 실패:", error);
+            }
           }
         } else {
           // 기본 캐릭터 설정
-          const character: Character = {
-            id: "basic",
-            name: "Basic",
-            imageUrl: await getCharacterImageUrl("basic", "normal"),
-          };
-          setSelectedCharacter(character);
+          try {
+            const imageUrl = await getCharacterImageUrl("basic", "normal");
+
+            // 기본 캐릭터 이미지 최적화
+            const optimizedImageUrl = optimizeImageUrl(imageUrl);
+
+            const character: Character = {
+              id: "basic",
+              name: "Basic",
+              imageUrl: optimizedImageUrl,
+            };
+
+            // 홈 화면과 동일한 상태 관리를 위해 스토어를 먼저 업데이트
+            useCharacterStore.getState().setSelectedCharacter(character);
+
+            // 로컬 상태도 업데이트
+            setSelectedCharacter(character);
+          } catch (error) {
+            console.error("기본 캐릭터 로드 실패:", error);
+          }
         }
 
         updateStoreNickname(data.nickname || "사용자");
@@ -647,6 +690,8 @@ export const ProfileScreen: React.FC = () => {
                   contentFit="contain"
                   cachePolicy="memory-disk"
                   transition={300}
+                  recyclingKey={selectedCharacter.id}
+                  priority="high"
                 />
                 <Text
                   style={[

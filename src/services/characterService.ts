@@ -24,19 +24,23 @@ export const getCharacterImageUrl = async (
   state: CharacterState
 ): Promise<string> => {
   try {
+    // 캐릭터 ID 소문자 변환 (일관성)
+    const normalizedCharacterId = characterId.toLowerCase().trim();
+
     // 이미지 파일명 결정 (매핑 테이블에서 가져옴)
     const imageName = imageNameMap[state];
     if (!imageName) {
       throw new Error(`알 수 없는 캐릭터 상태: ${state}`);
     }
 
+    // 이미지 URL 생성을 위한 경로
+    const imagePath = `${normalizedCharacterId}/${imageName}.png`;
+
     // Supabase에서 이미지 URL 가져오기
-    const { data } = supabase.storage
-      .from("images")
-      .getPublicUrl(`${characterId}/${imageName}.png`);
+    const { data } = supabase.storage.from("images").getPublicUrl(imagePath);
 
     if (!data || !data.publicUrl) {
-      throw new Error(`이미지 URL이 없습니다: ${characterId}/${imageName}.png`);
+      throw new Error(`이미지 URL이 없습니다: ${imagePath}`);
     }
 
     return data.publicUrl;

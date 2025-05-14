@@ -87,7 +87,7 @@ export const CharacterBox = React.memo(() => {
     };
 
     initializeCharacter();
-  }, [profileCharacter]); // 프로필 캐릭터만 의존성으로 지정
+  }, [profileCharacter]);
 
   // 상태 변경 감지 및 characterStore 동기화 (의존성 배열 최적화)
   useEffect(() => {
@@ -200,7 +200,7 @@ export const CharacterBox = React.memo(() => {
               contentFit="contain"
               cachePolicy="memory-disk"
               transition={300}
-              recyclingKey={`${selectedCharacter?.id}-${currentState}`}
+              recyclingKey={selectedCharacter?.id}
               priority="high"
               placeholder={{ uri: blurredImageUrl }}
               placeholderContentFit="contain"
