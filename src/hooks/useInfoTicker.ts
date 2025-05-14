@@ -18,6 +18,7 @@ export const useInfoTicker = (width: number) => {
   const usedIndicesRef = useRef<number[]>([]);
   const currentIndexRef = useRef(-1);
   const isMountedRef = useRef(true);
+  const isVisibleRef = useRef(true); // 컴포넌트 가시성을 추적하는 새 ref
 
   // 애니메이션 훅 사용
   const { translateX, opacity, startAnimation, resetAnimation } =
@@ -102,9 +103,31 @@ export const useInfoTicker = (width: number) => {
     }
   };
 
+  // 가시성 변경 시 InfoTicker 재시작 함수
+  const handleVisibilityChange = (isVisible: boolean) => {
+    isVisibleRef.current = isVisible;
+
+    if (isVisible && isRunningRef.current && isMountedRef.current) {
+      resetAnimation();
+
+      // 정보가 없는 경우 새로 선택
+      if (!currentInfo) {
+        selectNextInfo();
+      }
+
+      // 짧은 지연 후 애니메이션 재시작
+      setTimeout(() => {
+        if (isRunningRef.current && isMountedRef.current) {
+          startAnimation();
+        }
+      }, 50);
+    }
+  };
+
   // 컴포넌트 마운트/언마운트 감지
   useEffect(() => {
     isMountedRef.current = true;
+    isVisibleRef.current = true;
 
     // 이미 타이머가 실행 중이면 InfoTicker 시작
     if (isRunning) {
@@ -117,8 +140,20 @@ export const useInfoTicker = (width: number) => {
     };
   }, []);
 
+  // 포커스 효과를 위한 useEffect 추가
+  useEffect(() => {
+    // 컴포넌트가 다시 렌더링될 때마다 가시성 변경 핸들러 호출
+    // 이는 페이지 간 이동 후 돌아왔을 때 티커를 재시작하는 데 도움이 됩니다
+    const timeoutId = setTimeout(() => {
+      handleVisibilityChange(true);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   // isRunning 값을 ref에 동기화하고 타이머 상태 변경 시 처리
   useEffect(() => {
+    const wasRunning = isRunningRef.current;
     isRunningRef.current = isRunning;
 
     if (isRunning) {
@@ -131,7 +166,7 @@ export const useInfoTicker = (width: number) => {
           setCurrentInfo(info);
         }
 
-        // 즉시 애니메이션 시작하도록 수정
+        // 애니메이션 시작
         startInfoCycle();
       }
     } else {
@@ -139,7 +174,12 @@ export const useInfoTicker = (width: number) => {
       resetAnimation();
       setCurrentInfo("");
     }
-  }, [isRunning]);
+
+    // isRunning이 변경될 때마다 가시성 재설정 (페이지 이동 후 돌아왔을 때도 동작)
+    if (isRunning && !wasRunning) {
+      handleVisibilityChange(true);
+    }
+  }, [isRunning, currentInfo]);
 
   // 앱 상태 변경 감지 (백그라운드 <-> 포그라운드)
   useEffect(() => {
@@ -151,8 +191,7 @@ export const useInfoTicker = (width: number) => {
         isMountedRef.current
       ) {
         // 백그라운드에서 포그라운드로 돌아왔을 때 애니메이션 재시작
-        resetAnimation();
-        startInfoCycle();
+        handleVisibilityChange(true);
       } else if (
         appState.current === "active" &&
         nextAppState.match(/inactive|background/)

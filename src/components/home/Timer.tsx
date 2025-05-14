@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTimerStore } from "../../stores/timerStore";
 import { useThemeStore } from "../../stores/themeStore";
@@ -23,13 +23,35 @@ export const Timer = React.memo(() => {
   );
   const { isDark } = useThemeStore((state) => ({ isDark: state.isDark }));
 
-  // 경과 시간 계산
-  const elapsedSeconds = useMemo(() => getElapsed(), [getElapsed]);
+  // 경과 시간을 상태로 관리하여 화면 갱신 유도
+  const [currentElapsed, setCurrentElapsed] = useState(0);
+
+  // 타이머 실행 중일 때 시간 업데이트를 위한 useEffect
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (isRunning) {
+      // 첫 실행 시 바로 업데이트
+      setCurrentElapsed(getElapsed());
+
+      // 1초마다 경과 시간 업데이트
+      intervalId = setInterval(() => {
+        setCurrentElapsed(getElapsed());
+      }, 1000);
+    }
+
+    // 컴포넌트 언마운트 또는 의존성 변경 시 인터벌 정리
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isRunning, getElapsed]);
 
   // 남은 시간 계산
   const remainingTime = useMemo(
-    () => Math.max(0, totalTime - elapsedSeconds),
-    [totalTime, elapsedSeconds]
+    () => Math.max(0, totalTime - currentElapsed),
+    [totalTime, currentElapsed]
   );
 
   // 포맷된 시간을 메모이제이션
