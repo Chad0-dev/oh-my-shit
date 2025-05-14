@@ -12,12 +12,11 @@
       "resizeMode": "contain",
       "backgroundColor": "#3D4127"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ohmyshit.dev",
+      "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -33,9 +32,7 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": [
-      "expo-font"
-    ],
+    "plugins": ["expo-font"],
     "fonts": [
       {
         "asset": "./assets/fonts/Pattaya-Regular.ttf",
