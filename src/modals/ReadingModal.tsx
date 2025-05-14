@@ -95,7 +95,6 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({
         }));
 
         setAdvertisements(formattedAds);
-        console.log("로드된 광고:", formattedAds);
       } else {
         // 데이터가 없을 경우 기본 광고 사용
         setAdvertisements([

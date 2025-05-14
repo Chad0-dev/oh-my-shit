@@ -523,7 +523,9 @@ export const StatisticsScreen = () => {
                   isDark ? "text-green-400" : "text-green-600"
                 }`}
               >
-                {bestTimeData.hour < 12
+                {timeData.length === 0 || bestTimeData.count === 0
+                  ? "기록 없음"
+                  : bestTimeData.hour < 12
                   ? `오전 ${bestTimeData.hour || 12}시`
                   : `오후 ${
                       bestTimeData.hour === 12 ? 12 : bestTimeData.hour - 12

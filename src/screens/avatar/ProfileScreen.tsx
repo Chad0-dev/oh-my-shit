@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -17,8 +17,6 @@ import { useThemeStore } from "../../stores/themeStore";
 import { useAuthStore } from "../../stores/authStore";
 import { useProfileStore } from "../../stores/profileStore";
 import { supabase } from "../../supabase/client";
-import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { CharacterSelectModal } from "../../components/character/CharacterSelectModal";
@@ -31,7 +29,6 @@ export const ProfileScreen: React.FC = () => {
   const { isDark } = useThemeStore();
   const { user } = useAuthStore();
   const {
-    setAvatarUrl: updateStoreAvatar,
     setNickname: updateStoreNickname,
     setBirthdate: updateStoreBirthdate,
   } = useProfileStore();
@@ -42,7 +39,6 @@ export const ProfileScreen: React.FC = () => {
   const [email, setEmail] = useState<string>(user?.email || "");
   const [birthdate, setBirthdate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isLoadingCharacters, setIsLoadingCharacters] =
     useState<boolean>(false);
@@ -50,6 +46,13 @@ export const ProfileScreen: React.FC = () => {
   // 캐릭터 선택 모달 상태
   const [isCharacterSelectModalVisible, setCharacterSelectModalVisible] =
     useState(false);
+
+  // 비밀번호 변경 관련 상태 추가
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   // 프로필 데이터 로드
   useEffect(() => {
@@ -86,12 +89,6 @@ export const ProfileScreen: React.FC = () => {
         if (data.birthdate) {
           setBirthdate(new Date(data.birthdate));
           updateStoreBirthdate(data.birthdate);
-        }
-
-        // 아바타 URL 설정
-        if (data.avatar_url) {
-          setAvatarUrl(data.avatar_url);
-          updateStoreAvatar(data.avatar_url);
         }
 
         // 캐릭터 설정
@@ -235,127 +232,6 @@ export const ProfileScreen: React.FC = () => {
     }
   };
 
-  // 아바타 이미지 업로드 처리
-  const processImageUpload = async (imageUri: string) => {
-    try {
-      // 로딩 상태 시작
-      setIsUploading(true);
-      setAvatarUrl(null);
-
-      // 타임아웃 설정 (30초)
-      const uploadPromise = uploadAvatarImageWithFileSystem(imageUri);
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error("업로드 시간 초과")), 30000);
-      });
-
-      // 이미지 업로드 (타임아웃 적용)
-      const newAvatarUrl = await Promise.race([uploadPromise, timeoutPromise]);
-
-      // 로딩 상태 종료
-      setIsUploading(false);
-
-      if (newAvatarUrl) {
-        setAvatarUrl(newAvatarUrl);
-        updateStoreAvatar(newAvatarUrl);
-        Alert.alert("성공", "프로필 이미지가 업데이트되었습니다.");
-        return true;
-      } else {
-        Alert.alert("업로드 실패", "이미지 업로드 중 오류가 발생했습니다.");
-        return false;
-      }
-    } catch (error) {
-      console.error("이미지 업로드 중 오류:", error);
-      setIsUploading(false);
-      Alert.alert("업로드 실패", "이미지 처리 중 오류가 발생했습니다.");
-      return false;
-    }
-  };
-
-  // 아바타 이미지 선택 및 업로드
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-
-  const pickImage = async () => {
-    try {
-      const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (permissionResult.granted === false) {
-        Alert.alert("권한 필요", "사진 라이브러리 접근 권한이 필요합니다.");
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.5, // 이미지 품질을 더 낮게 설정 (0.7 → 0.5)
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const imageUri = result.assets[0].uri;
-        await processImageUpload(imageUri);
-      }
-    } catch (error) {
-      console.error("이미지 선택 중 오류:", error);
-      setIsUploading(false);
-      Alert.alert("오류", "이미지 선택 중 문제가 발생했습니다.");
-    }
-  };
-
-  // 이미지 업로드 함수 최적화
-  const uploadAvatarImageWithFileSystem = async (
-    uri: string
-  ): Promise<string | null> => {
-    try {
-      if (!user) return null;
-
-      // 파일 이름 생성 (유저 ID + 타임스탬프)
-      const fileExt = uri.split(".").pop()?.toLowerCase() || "jpg";
-      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-      const filePath = fileName;
-
-      // FileSystem을 사용하여 파일 정보 확인
-      const fileInfo = await FileSystem.getInfoAsync(uri);
-
-      if (!fileInfo.exists) {
-        return null;
-      }
-
-      // Supabase에서 제공하는 업로드 URL 가져오기
-      const { data, error } = await supabase.storage
-        .from("avatar")
-        .createSignedUploadUrl(filePath);
-
-      if (error) {
-        throw new Error(`서명된 URL 생성 실패: ${error.message}`);
-      }
-
-      const { signedUrl, path } = data;
-
-      // 파일 직접 업로드 (FileSystem.uploadAsync 사용)
-      const uploadResult = await FileSystem.uploadAsync(signedUrl, uri, {
-        httpMethod: "PUT",
-        headers: {
-          "Content-Type": `image/${fileExt}`,
-        },
-      });
-
-      if (uploadResult.status !== 200) {
-        throw new Error(`업로드 실패: HTTP 상태 ${uploadResult.status}`);
-      }
-
-      // 업로드된 이미지의 공개 URL 가져오기
-      const { data: urlData } = supabase.storage
-        .from("avatar")
-        .getPublicUrl(path);
-
-      return urlData?.publicUrl || null;
-    } catch (error) {
-      console.error("파일 시스템 업로드 오류:", error);
-      throw error;
-    }
-  };
-
   // 생년월일 선택 처리
   const onDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || birthdate;
@@ -394,7 +270,6 @@ export const ProfileScreen: React.FC = () => {
       const profileData = {
         nickname,
         birthdate: birthdate ? birthdate.toISOString().split("T")[0] : null,
-        avatar_url: avatarUrl,
         character_type: selectedCharacter?.id || "basic",
         updated_at: new Date(),
       };
@@ -414,15 +289,68 @@ export const ProfileScreen: React.FC = () => {
       updateStoreBirthdate(
         birthdate ? birthdate.toISOString().split("T")[0] : null
       );
-      if (avatarUrl) {
-        updateStoreAvatar(avatarUrl);
-      }
 
       setIsEditing(false);
       Alert.alert("성공", "프로필이 업데이트되었습니다.");
     } catch (error) {
       console.error("프로필 저장 중 오류:", error);
       Alert.alert("오류", "프로필 업데이트 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 비밀번호 변경 함수
+  const handlePasswordChange = async () => {
+    try {
+      // 유효성 검사
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        Alert.alert("입력 오류", "모든 필드를 입력해주세요.");
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        Alert.alert("입력 오류", "새 비밀번호가 일치하지 않습니다.");
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        Alert.alert("입력 오류", "비밀번호는 최소 6자 이상이어야 합니다.");
+        return;
+      }
+
+      setIsChangingPassword(true);
+
+      // 현재 비밀번호로 다시 로그인 시도하여 확인
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        Alert.alert("인증 오류", "현재 비밀번호가 일치하지 않습니다.");
+        setIsChangingPassword(false);
+        return;
+      }
+
+      // 비밀번호 변경
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // 비밀번호 변경 성공
+      setShowPasswordModal(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      Alert.alert("성공", "비밀번호가 성공적으로 변경되었습니다.");
+    } catch (error) {
+      console.error("비밀번호 변경 오류:", error);
+      Alert.alert("오류", "비밀번호 변경 중 오류가 발생했습니다.");
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -452,13 +380,13 @@ export const ProfileScreen: React.FC = () => {
         )}
       </View>
 
-      {/* 아바타 이미지 */}
-      <View style={styles.avatarContainer}>
-        <View style={styles.avatarWrapper}>
-          {isUploading ? (
+      {/* 프로필 영역 (캐릭터 이미지를 여기로 이동) */}
+      <View style={styles.profileContainer}>
+        <View style={styles.characterImageWrapper}>
+          {isLoadingCharacters ? (
             <View
               style={[
-                styles.avatarPlaceholder,
+                styles.characterPlaceholder,
                 { backgroundColor: isDark ? "#333333" : "#E0E0E0" },
               ]}
             >
@@ -466,21 +394,21 @@ export const ProfileScreen: React.FC = () => {
               <Text
                 style={{ color: isDark ? "#FFFFFF" : "#000000", marginTop: 10 }}
               >
-                업로드 중...
+                로딩 중...
               </Text>
             </View>
-          ) : avatarUrl ? (
+          ) : selectedCharacter?.imageUrl ? (
             <Image
-              source={avatarUrl}
-              style={styles.avatar}
-              contentFit="cover"
+              source={{ uri: selectedCharacter.imageUrl }}
+              style={styles.characterImage}
+              contentFit="contain"
               cachePolicy="memory-disk"
               transition={300}
             />
           ) : (
             <View
               style={[
-                styles.avatarPlaceholder,
+                styles.characterPlaceholder,
                 { backgroundColor: isDark ? "#333333" : "#E0E0E0" },
               ]}
             >
@@ -491,13 +419,12 @@ export const ProfileScreen: React.FC = () => {
               />
             </View>
           )}
-          {isEditing && !isUploading && (
+          {isEditing && (
             <TouchableOpacity
-              style={styles.changeAvatarButton}
-              onPress={pickImage}
-              disabled={isUploading}
+              style={styles.changeCharacterButtonSmall}
+              onPress={() => setCharacterSelectModalVisible(true)}
             >
-              <Ionicons name="camera" size={22} color="#FFFFFF" />
+              <Ionicons name="color-palette" size={22} color="#FFFFFF" />
             </TouchableOpacity>
           )}
         </View>
@@ -655,7 +582,7 @@ export const ProfileScreen: React.FC = () => {
         )}
       </View>
 
-      {/* 캐릭터 설정 섹션 */}
+      {/* 캐릭터 정보 섹션 */}
       <View
         style={[
           styles.section,
@@ -668,79 +595,104 @@ export const ProfileScreen: React.FC = () => {
             { color: isDark ? "#FFFFFF" : "#000000" },
           ]}
         >
-          캐릭터 설정
+          계정 관리
         </Text>
 
-        <View style={styles.characterPreviewContainer}>
-          {isLoadingCharacters ? (
-            <View style={styles.characterLoadingContainer}>
-              <ActivityIndicator size="large" color="#636B2F" />
-              <Text
-                style={{ color: isDark ? "#BBBBBB" : "#666666", marginTop: 10 }}
-              >
-                캐릭터 로딩 중...
-              </Text>
-            </View>
-          ) : selectedCharacter?.imageUrl ? (
-            <>
-              <View style={styles.characterImageContainer}>
-                <Image
-                  source={{ uri: selectedCharacter.imageUrl }}
-                  style={styles.characterPreview}
-                  contentFit="contain"
-                  cachePolicy="memory-disk"
-                  transition={300}
-                  recyclingKey={selectedCharacter.id}
-                  priority="high"
-                />
-                <Text
-                  style={[
-                    styles.characterName,
-                    { color: isDark ? "#FFFFFF" : "#000000" },
-                  ]}
-                >
-                  {selectedCharacter.name}
-                </Text>
-                {isEditing && (
-                  <TouchableOpacity
-                    style={[
-                      styles.changeCharacterButton,
-                      { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
-                    ]}
-                    onPress={() => setCharacterSelectModalVisible(true)}
-                  >
-                    <Text
-                      style={[
-                        styles.changeCharacterText,
-                        { color: isDark ? "#FFFFFF" : "#000000" },
-                      ]}
-                    >
-                      캐릭터 변경
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </>
-          ) : (
-            <View style={styles.characterLoadingContainer}>
-              <Text style={{ color: isDark ? "#BBBBBB" : "#666666" }}>
-                캐릭터를 불러올 수 없습니다
-              </Text>
-              <TouchableOpacity
-                style={{
-                  marginTop: 15,
-                  backgroundColor: "#636B2F",
-                  paddingVertical: 8,
-                  paddingHorizontal: 15,
-                  borderRadius: 5,
-                }}
-                onPress={loadUserProfile}
-              >
-                <Text style={{ color: "#FFFFFF" }}>다시 시도</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+        {/* 비밀번호 변경 */}
+        <TouchableOpacity
+          onPress={() => setShowPasswordModal(true)}
+          style={[
+            styles.passwordChangeButton,
+            { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+          ]}
+        >
+          <View style={styles.passwordChangeContent}>
+            <Ionicons
+              name="key-outline"
+              size={24}
+              color={isDark ? "#CCCCCC" : "#636B2F"}
+            />
+            <Text
+              style={[
+                styles.passwordChangeText,
+                { color: isDark ? "#FFFFFF" : "#000000" },
+              ]}
+            >
+              비밀번호 변경
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.passwordChangeDescription,
+              { color: isDark ? "#BBBBBB" : "#666666" },
+            ]}
+          >
+            비밀번호를 직접 변경합니다
+          </Text>
+        </TouchableOpacity>
+
+        {/* 계정 탈퇴 */}
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              "계정 탈퇴",
+              "정말로 탈퇴하시겠습니까?\n모든 기록 및 데이터가 영구적으로 삭제됩니다.",
+              [
+                { text: "취소", style: "cancel" },
+                {
+                  text: "탈퇴",
+                  style: "destructive",
+                  onPress: () => {
+                    // 두 번째 확인
+                    Alert.alert(
+                      "최종 확인",
+                      "정말 탈퇴하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+                      [
+                        { text: "취소", style: "cancel" },
+                        {
+                          text: "탈퇴 확인",
+                          style: "destructive",
+                          onPress: async () => {
+                            try {
+                              await useAuthStore.getState().deleteAccount();
+                            } catch (e) {
+                              const msg =
+                                e instanceof Error
+                                  ? e.message
+                                  : typeof e === "string"
+                                  ? e
+                                  : "계정 삭제에 실패했습니다.";
+                              Alert.alert("오류", msg);
+                            }
+                          },
+                        },
+                      ]
+                    );
+                  },
+                },
+              ]
+            );
+          }}
+          style={[
+            styles.deleteAccountButton,
+            { backgroundColor: isDark ? "#333333" : "#F5F5F5" },
+          ]}
+        >
+          <View style={styles.deleteAccountContent}>
+            <MaterialIcons name="delete-forever" size={24} color="#ff4d4f" />
+            <Text style={[styles.deleteAccountText, { color: "#ff4d4f" }]}>
+              계정 탈퇴
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.deleteAccountDescription,
+              { color: isDark ? "#BBBBBB" : "#666666" },
+            ]}
+          >
+            앱 사용 기록이 모두 삭제됩니다
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* 캐릭터 선택 모달 */}
@@ -750,6 +702,115 @@ export const ProfileScreen: React.FC = () => {
         onSelect={handleCharacterSelect}
         currentCharacter={selectedCharacter?.id || "basic"}
       />
+
+      {/* 비밀번호 변경 모달 */}
+      <Modal
+        visible={showPasswordModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowPasswordModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View
+            style={[
+              styles.modalContainer,
+              { backgroundColor: isDark ? "#333333" : "#FFFFFF" },
+            ]}
+          >
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: isDark ? "#FFFFFF" : "#000000" },
+              ]}
+            >
+              비밀번호 변경
+            </Text>
+
+            <TextInput
+              style={[
+                styles.modalInput,
+                {
+                  backgroundColor: isDark ? "#444444" : "#F5F5F5",
+                  color: isDark ? "#FFFFFF" : "#000000",
+                  borderColor: isDark ? "#555555" : "#DDDDDD",
+                },
+              ]}
+              placeholder="현재 비밀번호"
+              placeholderTextColor={isDark ? "#AAAAAA" : "#999999"}
+              secureTextEntry
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+            />
+
+            <TextInput
+              style={[
+                styles.modalInput,
+                {
+                  backgroundColor: isDark ? "#444444" : "#F5F5F5",
+                  color: isDark ? "#FFFFFF" : "#000000",
+                  borderColor: isDark ? "#555555" : "#DDDDDD",
+                },
+              ]}
+              placeholder="새 비밀번호"
+              placeholderTextColor={isDark ? "#AAAAAA" : "#999999"}
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+
+            <TextInput
+              style={[
+                styles.modalInput,
+                {
+                  backgroundColor: isDark ? "#444444" : "#F5F5F5",
+                  color: isDark ? "#FFFFFF" : "#000000",
+                  borderColor: isDark ? "#555555" : "#DDDDDD",
+                },
+              ]}
+              placeholder="새 비밀번호 확인"
+              placeholderTextColor={isDark ? "#AAAAAA" : "#999999"}
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setShowPasswordModal(false);
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                }}
+                disabled={isChangingPassword}
+              >
+                <Text style={styles.cancelButtonText}>취소</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  {
+                    backgroundColor: "#636B2F",
+                    opacity: isChangingPassword ? 0.7 : 1,
+                  },
+                ]}
+                onPress={handlePasswordChange}
+                disabled={isChangingPassword}
+              >
+                {isChangingPassword ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={{ color: "#FFFFFF", fontWeight: "500" }}>
+                    변경
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -789,27 +850,28 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "500",
   },
-  avatarContainer: {
+  profileContainer: {
     alignItems: "center",
     marginBottom: 30,
   },
-  avatarWrapper: {
+  characterImageWrapper: {
     position: "relative",
-    marginBottom: 10,
+    marginBottom: 15,
   },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  characterImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: "#F0F0F0",
   },
-  avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  characterPlaceholder: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     justifyContent: "center",
     alignItems: "center",
   },
-  changeAvatarButton: {
+  changeCharacterButtonSmall: {
     position: "absolute",
     right: 0,
     bottom: 0,
@@ -860,55 +922,77 @@ const styles = StyleSheet.create({
     padding: 5,
     borderBottomWidth: 1,
   },
-  passwordChangeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 10,
+  datePickerButton: {
+    width: "65%",
+    alignItems: "flex-end",
   },
-  passwordChangeText: {
-    fontSize: 14,
+  datePickerText: {
+    fontSize: 16,
     fontWeight: "500",
-    marginLeft: 10,
+    textAlign: "right",
   },
-  characterPreviewContainer: {
-    width: "100%",
+  characterInfoContainer: {
     alignItems: "center",
-    justifyContent: "center",
+    padding: 10,
   },
-  characterImageContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  characterPreview: {
-    width: 160,
-    height: 160,
-    marginBottom: 15,
-  },
-  characterInfo: {
-    alignItems: "center",
-    width: "100%",
-  },
-  characterName: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginBottom: 15,
+  characterDescription: {
+    fontSize: 16,
     textAlign: "center",
+    marginBottom: 15,
+    lineHeight: 22,
   },
   changeCharacterButton: {
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 8,
-    marginTop: 5,
   },
   changeCharacterText: {
     fontSize: 14,
     fontWeight: "500",
   },
+  deleteAccountButton: {
+    padding: 15,
+    borderRadius: 8,
+  },
+  deleteAccountContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  deleteAccountText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+  deleteAccountDescription: {
+    fontSize: 14,
+    marginLeft: 34,
+  },
+  passwordChangeButton: {
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  passwordChangeContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  passwordChangeText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+  passwordChangeDescription: {
+    fontSize: 14,
+    marginLeft: 34,
+  },
+  divider: {
+    height: 1,
+    width: "100%",
+    marginVertical: 15,
+  },
+  // 모달 스타일
   modalBackground: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -921,10 +1005,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
   },
-  characterModalContainer: {
-    width: "90%",
-    maxHeight: "80%",
-  },
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -935,6 +1015,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginBottom: 15,
+    borderWidth: 1,
   },
   modalButtons: {
     flexDirection: "row",
@@ -948,6 +1029,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: "48%",
     alignItems: "center",
+    justifyContent: "center",
   },
   cancelButton: {
     backgroundColor: "#888888",
@@ -955,46 +1037,5 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: "#FFFFFF",
     fontWeight: "500",
-  },
-  characterGrid: {
-    paddingVertical: 10,
-  },
-  selectedCharacterOption: {
-    borderWidth: 2,
-  },
-  characterOptionImage: {
-    width: 80,
-    height: 80,
-    marginBottom: 10,
-  },
-  characterOptionName: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  modalCloseButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    width: "100%",
-    alignItems: "center",
-    marginTop: 15,
-  },
-  modalCloseText: {
-    fontWeight: "500",
-  },
-  datePickerButton: {
-    width: "65%",
-    alignItems: "flex-end",
-  },
-  datePickerText: {
-    fontSize: 16,
-    fontWeight: "500",
-    textAlign: "right",
-  },
-  characterLoadingContainer: {
-    width: "100%",
-    height: 100,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });
