@@ -17,7 +17,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = "Oh My Sh!t",
+  title = "Oh My Poop",
   onMenuPress,
   onAvatarPress,
   onNavigateTo,

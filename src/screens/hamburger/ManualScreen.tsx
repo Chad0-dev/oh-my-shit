@@ -94,7 +94,7 @@ export const ManualScreen: React.FC = () => {
         <Text
           style={[styles.cardText, { color: isDark ? "#BBBBBB" : "#666666" }]}
         >
-          Oh My Sh!t 앱은 당신의 배변 활동을 기록하고 건강 상태를 모니터링하여
+          Oh My Poop 앱은 당신의 배변 활동을 기록하고 건강 상태를 모니터링하여
           더 건강한 생활 습관을 형성하도록 도와주는 앱입니다. 일상적인 배변
           활동을 추적하고, 관련 건강 정보를 확인하세요.
         </Text>
@@ -229,7 +229,7 @@ export const ManualScreen: React.FC = () => {
         <Text
           style={[styles.footerText, { color: isDark ? "#BBBBBB" : "#666666" }]}
         >
-          © 2024 Oh My Sh!t. All rights reserved.
+          © 2024 Oh My Poop. All rights reserved.
         </Text>
       </View>
     </ScrollView>

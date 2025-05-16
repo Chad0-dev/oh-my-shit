@@ -45,7 +45,7 @@ export const NotificationsScreen: React.FC = () => {
             { color: isDark ? "#FFFFFF" : "#000000" },
           ]}
         >
-          Oh My Sh!t
+          Oh My Poop
         </Text>
         <Text
           style={[styles.version, { color: isDark ? "#CCCCCC" : "#666666" }]}
@@ -236,7 +236,7 @@ export const NotificationsScreen: React.FC = () => {
             { color: isDark ? "#DDDDDD" : "#333333" },
           ]}
         >
-          OhMySh!t.dev
+          OhMyPoop.dev
         </Text>
         <View style={styles.teamMember}>
           <MaterialCommunityIcons
@@ -282,7 +282,7 @@ export const NotificationsScreen: React.FC = () => {
         </Text>
         <TouchableOpacity
           style={styles.contactItem}
-          onPress={() => openLink("mailto:ohmyshit.dev@gmail.com")}
+          onPress={() => openLink("mailto:ohmypoop.dev@gmail.com")}
         >
           <Ionicons
             name="mail"
@@ -295,12 +295,12 @@ export const NotificationsScreen: React.FC = () => {
               { color: isDark ? "#DDDDDD" : "#333333" },
             ]}
           >
-            ohmyshit.dev@gmail.com
+            ohmypoop.dev@gmail.com
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.contactItem}
-          onPress={() => openLink("https://instagram.com/ohmyshit")}
+          onPress={() => openLink("https://instagram.com/ohmypoop")}
         >
           <Ionicons
             name="logo-instagram"
@@ -313,7 +313,7 @@ export const NotificationsScreen: React.FC = () => {
               { color: isDark ? "#DDDDDD" : "#333333" },
             ]}
           >
-            @ohmyshit
+            @ohmypoop
           </Text>
         </TouchableOpacity>
       </View>
@@ -331,7 +331,7 @@ export const NotificationsScreen: React.FC = () => {
         <Text
           style={[styles.copyright, { color: isDark ? "#DDDDDD" : "#333333" }]}
         >
-          © {currentYear} Oh My Sh!t. All Rights Reserved.
+          © {currentYear} Oh My Poop. All Rights Reserved.
         </Text>
         <Text
           style={[

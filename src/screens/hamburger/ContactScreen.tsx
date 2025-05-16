@@ -74,8 +74,8 @@ export const ContactScreen: React.FC = () => {
 
   // 대체 이메일 전송 방법 (mailto: 링크)
   const sendEmailViaMailto = () => {
-    const emailAddress = "ohmyshit.dev@gmail.com";
-    const emailSubject = encodeURIComponent(subject || "Oh My Sh!t 앱 문의");
+    const emailAddress = "ohmypoop.dev@gmail.com";
+    const emailSubject = encodeURIComponent(subject || "Oh My Poop 앱 문의");
     const emailBody = encodeURIComponent(
       `이름: ${name || "익명"}\n이메일: ${
         email || "답변받을 이메일 없음"
@@ -90,7 +90,7 @@ export const ContactScreen: React.FC = () => {
         } else {
           Alert.alert(
             "오류",
-            "이메일 앱을 열 수 없습니다. 직접 이메일을 보내주세요: ohmyshit.dev@gmail.com"
+            "이메일 앱을 열 수 없습니다. 직접 이메일을 보내주세요: ohmypoop.dev@gmail.com"
           );
         }
       })
@@ -164,17 +164,17 @@ export const ContactScreen: React.FC = () => {
     {
       icon: "mail-outline",
       label: "이메일",
-      value: "ohmyshit.dev@gmail.com",
+      value: "ohmypoop.dev@gmail.com",
       action: () => {
-        Linking.openURL("mailto:ohmyshit.dev@gmail.com");
+        Linking.openURL("mailto:ohmypoop.dev@gmail.com");
       },
     },
     {
       icon: "logo-instagram",
       label: "인스타그램",
-      value: "@ohmyshit",
+      value: "@ohmypoop",
       action: () => {
-        Linking.openURL("https://instagram.com/ohmyshit");
+        Linking.openURL("https://instagram.com/ohmypoop");
       },
     },
   ];
@@ -431,7 +431,7 @@ export const ContactScreen: React.FC = () => {
               { color: isDark ? "#BBBBBB" : "#666666" },
             ]}
           >
-            © 2024 Oh My Sh!t. All rights reserved.
+            © 2024 Oh My Poop. All rights reserved.
           </Text>
         </View>
       </ScrollView>

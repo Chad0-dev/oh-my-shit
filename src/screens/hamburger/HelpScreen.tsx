@@ -42,7 +42,7 @@ export const HelpScreen: React.FC = () => {
     {
       question: "앱에 입력한 개인 데이터는 어떻게 보호되나요?",
       answer:
-        "Oh My Sh!t 앱은 사용자의 개인정보 보호를 최우선으로 생각합니다. 사용자의 명시적인 동의 없이는 외부로 전송되지 않습니다. 또한 암호화 기술을 사용하여 데이터를 안전하게 보호합니다.",
+        "Oh My Poop 앱은 사용자의 개인정보 보호를 최우선으로 생각합니다. 사용자의 명시적인 동의 없이는 외부로 전송되지 않습니다. 또한 암호화 기술을 사용하여 데이터를 안전하게 보호합니다.",
       expanded: false,
     },
   ]);
@@ -94,7 +94,7 @@ export const HelpScreen: React.FC = () => {
         <Text
           style={[styles.cardText, { color: isDark ? "#BBBBBB" : "#666666" }]}
         >
-          Oh My Sh!t 앱 사용 중 궁금한 점이나 문제가 있으신가요? 아래 자주 묻는
+          Oh My Poop 앱 사용 중 궁금한 점이나 문제가 있으신가요? 아래 자주 묻는
           질문에서 해결책을 찾아보세요.
         </Text>
       </View>

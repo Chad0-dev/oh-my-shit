@@ -149,10 +149,10 @@ export const evaluateBowelStatus = async (
 
 // 배변 상태별 메시지 객체
 export const statusMessages = {
-  좋음: "My Sh!t Condition: Good 😊",
-  보통: "My Sh!t Condition: Normal 🙂",
-  나쁨: "My Sh!t Condition: Bad 😟",
-  "알 수 없음": "My Sh!t Condition: Unknown 😕",
+  좋음: "My Poop Condition: Good 😊",
+  보통: "My Poop Condition: Normal 🙂",
+  나쁨: "My Poop Condition: Bad 😟",
+  "알 수 없음": "My Poop Condition: Unknown 😕",
 };
 
 // 기본 문구 상수 (이제 함수로 변경)

@@ -172,7 +172,7 @@ export const StatisticsScreen = () => {
 
   // 그래프 넓이 계산
   const graphWidth = Dimensions.get("window").width - 80; // 양쪽 패딩 감안
-  const graphHeight = 120; // 높이 줄임
+  const graphHeight = 120; // 그래프 높이 더 줄임
   const maxCount = Math.max(...timeData.map((item) => item.count), 1); // 최소 1로 설정하여 0 나누기 방지
 
   // Y축 레이블 생성 및 배치 함수 - 숫자 없이 축만 표시
@@ -194,7 +194,8 @@ export const StatisticsScreen = () => {
     // 데이터 포인트 준비
     const points = timeData.map((point, index) => {
       const x = (index / 23) * graphWidth;
-      const y = graphHeight - (point.count / maxCount) * graphHeight;
+      // 상단에 20% 여백을 추가하여 그래프가 잘리지 않도록 함
+      const y = graphHeight - (point.count / maxCount) * (graphHeight * 0.8);
       return { x, y };
     });
 
@@ -226,7 +227,8 @@ export const StatisticsScreen = () => {
     // 데이터 포인트 준비
     const points = timeData.map((point, index) => {
       const x = (index / 23) * graphWidth;
-      const y = graphHeight - (point.count / maxCount) * graphHeight;
+      // 상단에 20% 여백을 추가하여 그래프가 잘리지 않도록 함
+      const y = graphHeight - (point.count / maxCount) * (graphHeight * 0.8);
       return { x, y };
     });
 
@@ -379,7 +381,6 @@ export const StatisticsScreen = () => {
                 className={`text-lg font-bold mb-3 ${
                   isDark ? "text-white" : "text-mossy-darkest"
                 }`}
-                style={{ fontFamily: "Pattaya" }}
               >
                 {selectedPeriod.label} Records
               </StyledText>
@@ -512,9 +513,8 @@ export const StatisticsScreen = () => {
               className={`text-lg font-bold mb-3 ${
                 isDark ? "text-white" : "text-mossy-darkest"
               }`}
-              style={{ fontFamily: "Pattaya" }}
             >
-              My Best Sh!t Time
+              My Best Toilet Time
             </StyledText>
 
             <StyledView className="items-center mb-2">
@@ -597,9 +597,8 @@ export const StatisticsScreen = () => {
               className={`text-lg font-bold mb-3 ${
                 isDark ? "text-white" : "text-mossy-darkest"
               }`}
-              style={{ fontFamily: "Pattaya" }}
             >
-              AI Diagnosis
+              Ai Diagnosis
             </StyledText>
             <StyledView className="items-center justify-center py-6">
               <StyledText
@@ -643,7 +642,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   simplifiedChartContainer: {
-    height: 220, // 전체 컨테이너 높이 감소
+    height: 260, // 전체 컨테이너 높이 더 증가
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,

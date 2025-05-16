@@ -95,7 +95,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
               }`}
               style={styles.titleText}
             >
-              Oh My Sh!t
+              Oh My Poop
             </StyledText>
           </View>
 

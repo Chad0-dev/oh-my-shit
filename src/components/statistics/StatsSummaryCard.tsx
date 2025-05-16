@@ -56,7 +56,6 @@ export const StatsSummaryCard: React.FC<StatsSummaryCardProps> = ({
         className={`text-lg font-bold mb-3 ${
           isDark ? "text-white" : "text-mossy-darkest"
         }`}
-        style={{ fontFamily: "Pattaya" }}
       >
         Summary
       </StyledText>

@@ -73,7 +73,7 @@ export const AppNavigation: React.FC = () => {
 
   // 탭에 따른 타이틀 설정
   const getTitle = () => {
-    return "Oh My Sh!t";
+    return "Oh My Poop";
   };
 
   // 햄버거 메뉴 화면으로 이동
