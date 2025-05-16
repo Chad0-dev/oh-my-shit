@@ -38,11 +38,6 @@
         "asset": "./assets/fonts/Pattaya-Regular.ttf",
         "family": "Pattaya"
       }
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "a885c728-5d25-4658-aa00-3ae1bfced4cf"
-      }
-    }
+    ]
   }
 }
