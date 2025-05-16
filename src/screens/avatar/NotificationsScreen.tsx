@@ -9,7 +9,11 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useThemeStore } from "../../stores/themeStore";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  FontAwesome,
+} from "@expo/vector-icons";
 
 export const NotificationsScreen: React.FC = () => {
   const { isDark } = useThemeStore();
@@ -109,8 +113,115 @@ export const NotificationsScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* 건강 관련 면책 조항 */}
+      <View
+        style={[
+          styles.section,
+          {
+            marginTop: 10,
+            borderWidth: 1,
+            borderColor: isDark
+              ? "rgba(99, 107, 47, 0.4)"
+              : "rgba(99, 107, 47, 0.3)",
+            borderRadius: 8,
+            padding: 10,
+            backgroundColor: isDark
+              ? "rgba(99, 107, 47, 0.1)"
+              : "rgba(99, 107, 47, 0.05)",
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.sectionTitle,
+            {
+              color: isDark ? "#FFFFFF" : "#636B2F",
+              fontSize: 20,
+            },
+          ]}
+        >
+          건강 정보 면책 조항
+        </Text>
+
+        <View
+          style={[
+            styles.disclaimerBox,
+            {
+              backgroundColor: isDark
+                ? "rgba(99, 107, 47, 0.2)"
+                : "rgba(99, 107, 47, 0.1)",
+              borderWidth: 1,
+              borderColor: isDark
+                ? "rgba(99, 107, 47, 0.4)"
+                : "rgba(99, 107, 47, 0.3)",
+            },
+          ]}
+        >
+          <FontAwesome
+            name="exclamation-triangle"
+            size={20}
+            color={isDark ? "#CCCCCC" : "#636B2F"}
+            style={styles.disclaimerIcon}
+          />
+          <Text
+            style={[
+              styles.disclaimerText,
+              {
+                color: isDark ? "#FFFFFF" : "#636B2F",
+                fontWeight: "bold",
+              },
+            ]}
+          >
+            이 앱은 의학적 조언을 제공하지 않습니다. 앱에서 제공하는 정보는 건강
+            상태에 대한 전문적인 진단이나 치료를 대체할 수 없습니다.
+          </Text>
+        </View>
+
+        <View style={[styles.featureItem, { marginTop: 10 }]}>
+          <Ionicons
+            name="information-circle-outline"
+            size={20}
+            color={isDark ? "#CCCCCC" : "#636B2F"}
+            style={styles.featureIcon}
+          />
+          <Text
+            style={[
+              styles.featureText,
+              {
+                color: isDark ? "#DDDDDD" : "#333333",
+                fontWeight: "500",
+              },
+            ]}
+          >
+            심각한 건강 문제나 지속적인 증상이 있는 경우 의사와 상담하시기
+            바랍니다.
+          </Text>
+        </View>
+
+        <View style={[styles.featureItem, { marginTop: 5 }]}>
+          <Ionicons
+            name="information-circle-outline"
+            size={20}
+            color={isDark ? "#CCCCCC" : "#636B2F"}
+            style={styles.featureIcon}
+          />
+          <Text
+            style={[
+              styles.featureText,
+              {
+                color: isDark ? "#DDDDDD" : "#333333",
+                fontWeight: "500",
+              },
+            ]}
+          >
+            본 앱은 배변 습관을 추적하고 통계를 제공하기 위한 목적으로만
+            사용됩니다.
+          </Text>
+        </View>
+      </View>
+
       {/* 팀 정보 */}
-      <View style={styles.section}>
+      <View style={[styles.section, { marginTop: 15 }]}>
         <Text
           style={[
             styles.sectionTitle,
@@ -303,5 +414,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     flex: 1,
+  },
+  disclaimerBox: {
+    flexDirection: "row",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    marginTop: 5,
+  },
+  disclaimerIcon: {
+    marginRight: 10,
+    marginTop: 2,
+  },
+  disclaimerText: {
+    fontSize: 14,
+    lineHeight: 20,
+    flex: 1,
+    fontWeight: "500",
   },
 });
