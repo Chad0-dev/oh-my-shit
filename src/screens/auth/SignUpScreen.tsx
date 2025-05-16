@@ -67,6 +67,11 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ onLoginPress }) => {
 
   // 생년월일을 나이대로 변환
   const getBirthYearGroup = (birthDate: string) => {
+    // 생년월일이 없는 경우 undefined 반환 (선택사항)
+    if (!birthDate || birthDate.trim() === "") {
+      return undefined;
+    }
+
     let year: number;
 
     // YYYYMMDD 형식
@@ -104,11 +109,8 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ onLoginPress }) => {
       setValidationError("비밀번호가 일치하지 않습니다.");
       return false;
     }
-    if (!birthDate) {
-      setValidationError("생년월일을 입력해주세요.");
-      return false;
-    }
-    if (!isValidBirthDate(birthDate)) {
+    // 생년월일 필드 검증 수정 (입력된 경우에만 형식 검증)
+    if (birthDate && !isValidBirthDate(birthDate)) {
       setValidationError("유효한 생년월일 형식이 아닙니다. (YYYY-MM-DD)");
       return false;
     }
@@ -191,7 +193,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ onLoginPress }) => {
             />
 
             <InputField
-              label="생년월일"
+              label="생년월일 (선택사항)"
               placeholder="YYYY-MM-DD"
               keyboardType="numeric"
               value={birthDate}
@@ -202,7 +204,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ onLoginPress }) => {
                 isDark ? "text-gray-300" : "text-gray-500"
               }`}
             >
-              연령대별 정보 제공을 위함
+              선택사항입니다. 연령대별 정보 제공을 위함
             </StyledText>
 
             {(validationError || error) && (

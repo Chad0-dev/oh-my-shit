@@ -54,6 +54,9 @@ export const ProfileScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  // 생년월일 정보 툴팁 상태
+  const [showBirthTooltip, setShowBirthTooltip] = useState(false);
+
   // 프로필 데이터 로드
   useEffect(() => {
     if (user) {
@@ -512,14 +515,26 @@ export const ProfileScreen: React.FC = () => {
 
         {/* 생년월일 */}
         <View style={styles.infoRow}>
-          <Text
-            style={[
-              styles.infoLabel,
-              { color: isDark ? "#BBBBBB" : "#666666" },
-            ]}
-          >
-            생년월일
-          </Text>
+          <View style={styles.labelContainer}>
+            <Text
+              style={[
+                styles.infoLabel,
+                { color: isDark ? "#BBBBBB" : "#666666" },
+              ]}
+            >
+              생년월일
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowBirthTooltip(true)}
+              style={styles.infoIconButton}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={18}
+                color={isDark ? "#BAC095" : "#636B2F"}
+              />
+            </TouchableOpacity>
+          </View>
           {isEditing ? (
             <TouchableOpacity
               onPress={showDatepicker}
@@ -811,6 +826,62 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* 생년월일 정보 툴팁 모달 */}
+      <Modal
+        visible={showBirthTooltip}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowBirthTooltip(false)}
+      >
+        <TouchableOpacity
+          style={styles.tooltipBackground}
+          activeOpacity={1}
+          onPress={() => setShowBirthTooltip(false)}
+        >
+          <View
+            style={[
+              styles.tooltipContainer,
+              { backgroundColor: isDark ? "#444444" : "#FFFFFF" },
+            ]}
+          >
+            <View style={styles.tooltipHeader}>
+              <Text
+                style={[
+                  styles.tooltipTitle,
+                  { color: isDark ? "#FFFFFF" : "#000000" },
+                ]}
+              >
+                생년월일 정보
+              </Text>
+              <TouchableOpacity onPress={() => setShowBirthTooltip(false)}>
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={isDark ? "#BBBBBB" : "#666666"}
+                />
+              </TouchableOpacity>
+            </View>
+            <Text
+              style={[
+                styles.tooltipText,
+                { color: isDark ? "#FFFFFF" : "#000000" },
+              ]}
+            >
+              생년월일을 입력하면 연령대별 통계를 제공합니다. 미입력시
+              전체사용자의 통계로 정보가 제공 됩니다.
+            </Text>
+            <Text
+              style={[
+                styles.tooltipNote,
+                { color: isDark ? "#BAC095" : "#636B2F" },
+              ]}
+            >
+              아직 연령대별 통계기능은 구현되지 않았습니다
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 };
@@ -905,9 +976,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 15,
   },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "30%",
+  },
   infoLabel: {
     fontSize: 16,
-    width: "30%",
+  },
+  infoIconButton: {
+    marginLeft: 5,
+    padding: 2,
   },
   infoValue: {
     fontSize: 16,
@@ -1037,5 +1116,42 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: "#FFFFFF",
     fontWeight: "500",
+  },
+  // 툴팁 스타일
+  tooltipBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tooltipContainer: {
+    width: "80%",
+    padding: 16,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  tooltipHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  tooltipTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  tooltipText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  tooltipNote: {
+    fontSize: 14,
+    fontStyle: "italic",
+    marginTop: 5,
   },
 });
