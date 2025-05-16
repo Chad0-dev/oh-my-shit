@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Oh My Poop",
-    "slug": "oh-my-shit",
+    "slug": "oh-my-poop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +15,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ohmyshit.dev",
+      "bundleIdentifier": "com.chad.ohmypoop",
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -26,7 +26,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3D4127"
       },
-      "package": "com.ohmyshit.dev"
+      "package": "com.chad.ohmypoop"
     },
     "web": {
       "favicon": "./assets/favicon.png",
