@@ -2,7 +2,7 @@
   "expo": {
     "name": "Oh My Poop",
     "slug": "oh-my-poop",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chad.ohmypoop",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -38,6 +38,11 @@
         "asset": "./assets/fonts/Pattaya-Regular.ttf",
         "family": "Pattaya"
       }
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "afb84fb1-58e5-4293-a136-8c1d25f12332"
+      }
+    }
   }
 }

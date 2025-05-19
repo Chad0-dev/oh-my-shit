@@ -229,7 +229,7 @@ export const ManualScreen: React.FC = () => {
         <Text
           style={[styles.footerText, { color: isDark ? "#BBBBBB" : "#666666" }]}
         >
-          © 2024 Oh My Poop. All rights reserved.
+          © 2025 Oh My Poop. All rights reserved.
         </Text>
       </View>
     </ScrollView>

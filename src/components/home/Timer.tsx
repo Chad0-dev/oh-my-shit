@@ -13,18 +13,23 @@ const formatTime = (seconds: number): string => {
 };
 
 export const Timer = React.memo(() => {
-  const { isRunning, totalTime, getElapsed, resultState } = useTimerStore(
-    (state) => ({
+  const { isRunning, totalTime, getElapsed, resultState, resetSignal } =
+    useTimerStore((state) => ({
       isRunning: state.isRunning,
       totalTime: state.totalTime,
       getElapsed: state.getElapsed,
       resultState: state.resultState,
-    })
-  );
+      resetSignal: state.resetSignal,
+    }));
   const { isDark } = useThemeStore((state) => ({ isDark: state.isDark }));
 
   // 경과 시간을 상태로 관리하여 화면 갱신 유도
   const [currentElapsed, setCurrentElapsed] = useState(0);
+
+  // resetSignal이 변경될 때 경과 시간 초기화
+  useEffect(() => {
+    setCurrentElapsed(0);
+  }, [resetSignal]);
 
   // 타이머 실행 중일 때 시간 업데이트를 위한 useEffect
   useEffect(() => {

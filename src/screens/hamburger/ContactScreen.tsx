@@ -172,9 +172,9 @@ export const ContactScreen: React.FC = () => {
     {
       icon: "logo-instagram",
       label: "인스타그램",
-      value: "@ohmypoop",
+      value: "@ohmypoop.dev",
       action: () => {
-        Linking.openURL("https://instagram.com/ohmypoop");
+        Linking.openURL("https://instagram.com/ohmypoop.dev");
       },
     },
   ];
@@ -417,7 +417,9 @@ export const ContactScreen: React.FC = () => {
             <Text
               style={styles.linkText}
               onPress={() =>
-                Linking.openURL("https://www.ohmyshit.app/privacy")
+                Linking.openURL(
+                  "https://unique-sole-f21.notion.site/Oh-My-Poop-1f2b5ebf8562805682bec6e528eae47f?pvs=4"
+                )
               }
             >
               {" "}
@@ -431,7 +433,7 @@ export const ContactScreen: React.FC = () => {
               { color: isDark ? "#BBBBBB" : "#666666" },
             ]}
           >
-            © 2024 Oh My Poop. All rights reserved.
+            © 2025 Oh My Poop. All rights reserved.
           </Text>
         </View>
       </ScrollView>
