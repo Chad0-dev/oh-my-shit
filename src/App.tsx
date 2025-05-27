@@ -1,11 +1,7 @@
 import React, { useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { useAuthStore } from "./stores/authStore";
-import {
-  BiometricLoginButton,
-  BiometricSettings,
-  BiometricDebug,
-} from "./components/auth";
+import { BiometricLoginButton, BiometricSettings } from "./components/auth";
 
 export default function App() {
   const { initializeAuth, user, isLoading } = useAuthStore();
@@ -21,8 +17,8 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      {/* 디버그 정보 (개발 중에만 표시) */}
-      <BiometricDebug />
+      {/* 개발용 디버그 정보 - 프로덕션에서는 제거 */}
+      {/* <BiometricDebug /> */}
 
       {user ? (
         // 로그인된 상태

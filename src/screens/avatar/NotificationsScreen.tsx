@@ -50,7 +50,7 @@ export const NotificationsScreen: React.FC = () => {
         <Text
           style={[styles.version, { color: isDark ? "#CCCCCC" : "#666666" }]}
         >
-          버전 1.0.0
+          버전 1.0.2
         </Text>
         <Text
           style={[
@@ -313,7 +313,7 @@ export const NotificationsScreen: React.FC = () => {
               { color: isDark ? "#DDDDDD" : "#333333" },
             ]}
           >
-            @ohmypoop
+            @ohmypoop.dev
           </Text>
         </TouchableOpacity>
       </View>

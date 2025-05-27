@@ -290,7 +290,7 @@ export const SettingsScreen: React.FC = () => {
                 { color: isDark ? "#BBBBBB" : "#666666" },
               ]}
             >
-              1.0.0 (빌드 100)
+              1.0.2
             </Text>
           </View>
         </View>
