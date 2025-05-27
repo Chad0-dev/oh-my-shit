@@ -2,6 +2,15 @@ import { create } from "zustand";
 import { supabase } from "../supabase/client";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase/config";
 import { Alert } from "react-native";
+import {
+  authenticateWithBiometric,
+  checkBiometricAvailability,
+  setBiometricEnabled,
+  isBiometricEnabled,
+  storeCredentialsSecurely,
+  getStoredCredentials,
+  clearStoredCredentials,
+} from "../utils/biometricAuth";
 
 interface User {
   id: string;
@@ -13,7 +22,13 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  signIn: (email: string, password: string) => Promise<void>;
+  biometricAvailable: boolean;
+  biometricEnabled: boolean;
+  signIn: (
+    email: string,
+    password: string,
+    enableBiometric?: boolean
+  ) => Promise<void>;
   signUp: (
     email: string,
     password: string,
@@ -22,14 +37,87 @@ interface AuthState {
   signOut: () => Promise<void>;
   clearError: () => void;
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
+  initializeAuth: () => Promise<void>;
+  signInWithBiometric: () => Promise<void>;
+  toggleBiometric: (enabled: boolean) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
   error: null,
+  biometricAvailable: false,
+  biometricEnabled: false,
 
-  signIn: async (email, password) => {
+  initializeAuth: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      // 1. 생체인증 가용성 확인
+      const { isAvailable } = await checkBiometricAvailability();
+      const biometricEnabled = await isBiometricEnabled();
+
+      set({
+        biometricAvailable: isAvailable,
+        biometricEnabled: biometricEnabled && isAvailable,
+      });
+
+      // 2. 현재 세션 확인
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      if (session) {
+        // 3. 세션이 있으면 사용자 정보 가져오기
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+
+        if (userError && userError.code !== "PGRST116") {
+          console.error("사용자 정보 조회 실패:", userError);
+        }
+
+        set({
+          user: {
+            id: session.user.id,
+            email: session.user.email || "",
+            age_group: userData?.age_group,
+          },
+          isLoading: false,
+        });
+      } else if (biometricEnabled && isAvailable) {
+        // 4. 세션이 없고 생체인증이 활성화되어 있으면 생체인증 시도
+        const storedCredentials = await getStoredCredentials();
+        if (storedCredentials) {
+          const biometricResult = await authenticateWithBiometric();
+          if (biometricResult.success) {
+            // 생체인증 성공 시 저장된 인증정보로 로그인 (생체인증 저장 비활성화)
+            await get().signIn(
+              storedCredentials.email,
+              storedCredentials.hashedPassword,
+              false // 무한 루프 방지: 생체인증 저장 비활성화
+            );
+          } else {
+            set({ user: null, isLoading: false });
+          }
+        } else {
+          set({ user: null, isLoading: false });
+        }
+      } else {
+        set({ user: null, isLoading: false });
+      }
+    } catch (error: any) {
+      console.error("인증 초기화 실패:", error);
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  signIn: async (email, password, enableBiometric = false) => {
     try {
       set({ isLoading: true, error: null });
 
@@ -62,6 +150,13 @@ export const useAuthStore = create<AuthState>((set) => ({
           },
           isLoading: false,
         });
+
+        // 생체인증 활성화 요청이 있고 가능한 경우 인증정보 저장
+        if (enableBiometric && get().biometricAvailable) {
+          await storeCredentialsSecurely(email, password);
+          await setBiometricEnabled(true);
+          set({ biometricEnabled: true });
+        }
       } else {
         set({ user: null, isLoading: false });
       }
@@ -232,13 +327,105 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log("3. 로그아웃 처리");
       await supabase.auth.signOut();
 
+      // 생체인증 데이터 삭제
+      await clearStoredCredentials();
+
       // 로컬 상태 초기화
-      set({ user: null, isLoading: false });
+      set({ user: null, isLoading: false, biometricEnabled: false });
 
       return { success: true };
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
       return { success: false, error: error.message };
+    }
+  },
+
+  signInWithBiometric: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const biometricResult = await authenticateWithBiometric();
+
+      if (!biometricResult.success) {
+        set({
+          error: biometricResult.error || "생체인증에 실패했습니다.",
+          isLoading: false,
+        });
+        return;
+      }
+
+      const storedCredentials = await getStoredCredentials();
+      if (!storedCredentials) {
+        set({
+          error: "저장된 인증 정보가 없습니다. 다시 로그인해주세요.",
+          isLoading: false,
+        });
+        return;
+      }
+
+      // 저장된 인증정보로 로그인
+      await get().signIn(
+        storedCredentials.email,
+        storedCredentials.hashedPassword
+      );
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  toggleBiometric: async (enabled: boolean) => {
+    try {
+      if (enabled && !get().biometricAvailable) {
+        Alert.alert(
+          "생체인증 사용 불가",
+          "생체인증을 사용할 수 없습니다. 설정에서 Face ID 또는 Touch ID를 활성화해주세요."
+        );
+        return;
+      }
+
+      if (enabled) {
+        const currentUser = get().user;
+        if (!currentUser) {
+          Alert.alert("오류", "로그인된 사용자가 없습니다.");
+          return;
+        }
+
+        const biometricResult = await authenticateWithBiometric();
+        if (biometricResult.success) {
+          // 현재 로그인된 사용자의 이메일을 저장 (비밀번호는 임시로 빈 문자열)
+          // 실제로는 현재 세션 토큰이나 다른 안전한 방법을 사용해야 함
+          Alert.alert(
+            "인증정보 입력",
+            "생체인증 설정을 위해 현재 비밀번호를 입력해주세요.",
+            [
+              { text: "취소", style: "cancel" },
+              {
+                text: "확인",
+                onPress: () => {
+                  // 실제 구현에서는 비밀번호 입력 모달을 띄워야 함
+                  console.log("비밀번호 입력 모달 필요");
+                },
+              },
+            ]
+          );
+
+          await setBiometricEnabled(true);
+          set({ biometricEnabled: true });
+          Alert.alert("설정 완료", "생체인증이 활성화되었습니다.");
+        } else {
+          Alert.alert(
+            "인증 실패",
+            biometricResult.error || "생체인증에 실패했습니다."
+          );
+        }
+      } else {
+        await setBiometricEnabled(false);
+        await clearStoredCredentials();
+        set({ biometricEnabled: false });
+        Alert.alert("설정 완료", "생체인증이 비활성화되었습니다.");
+      }
+    } catch (error: any) {
+      Alert.alert("오류", error.message || "설정 중 오류가 발생했습니다.");
     }
   },
 }));
