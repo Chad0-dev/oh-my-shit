@@ -5,6 +5,9 @@ import { format, subDays } from "date-fns";
 // 배변 상태 타입 정의
 export type BowelStatusType = "좋음" | "보통" | "나쁨" | "알 수 없음";
 
+// 영어 배변 상태 타입 추가
+export type EnglishBowelStatusType = "good" | "normal" | "bad" | "unknown";
+
 // 배변 상태 관련 인터페이스 정의
 export interface BowelStatusResult {
   status: BowelStatusType;
@@ -88,8 +91,8 @@ export const evaluateBowelStatus = async (
     const dailyAverage = parseFloat((totalCount / 7).toFixed(1));
 
     // 상태 평가
-    if (dailyAverage >= 1 && averageDuration <= 240) {
-      // 하루 1회 이상, 4분(240초) 이내
+    if (dailyAverage >= 1 && averageDuration <= 300) {
+      // 하루 1회 이상, 5분(300초) 이내
       return {
         status: "좋음",
         message: "규칙적인 배변 활동과 효율적인 배변 시간을 유지하고 있습니다.",
@@ -100,8 +103,8 @@ export const evaluateBowelStatus = async (
           successCount,
         },
       };
-    } else if (dailyAverage >= 0.7 && averageDuration <= 300) {
-      // 이틀에 한 번 이상, 5분 이내
+    } else if (dailyAverage >= 0.7 && averageDuration <= 420) {
+      // 이틀에 한 번 이상, 7분(420초) 이내
       return {
         status: "보통",
         message:
@@ -119,7 +122,7 @@ export const evaluateBowelStatus = async (
       if (dailyAverage < 0.7) {
         reason =
           "배변 횟수가 부족합니다. 식이섬유 섭취를 늘리고 수분을 충분히 섭취하세요.";
-      } else if (averageDuration > 300) {
+      } else if (averageDuration > 420) {
         reason =
           "배변 시간이 너무 깁니다. 충분한 운동과 식이조절을 시도해보세요.";
       } else {
@@ -209,3 +212,28 @@ export const constipationInfos = [
   "장 운동은 아침에 가장 활발하니 기상 후 활동을 권장해요.",
   "장내 가스가 자주 찬다면 탄산음료는 줄이는 게 좋아요.",
 ];
+
+// 한국어 상태를 영어 상태로 변환하는 함수
+export const getEnglishStatus = (
+  koreanStatus: BowelStatusType
+): EnglishBowelStatusType => {
+  switch (koreanStatus) {
+    case "좋음":
+      return "good";
+    case "보통":
+      return "normal";
+    case "나쁨":
+      return "bad";
+    case "알 수 없음":
+    default:
+      return "unknown";
+  }
+};
+
+// 영어 상태를 직접 반환하는 함수
+export const evaluateBowelStatusEnglish = async (
+  userId: string
+): Promise<EnglishBowelStatusType> => {
+  const result = await evaluateBowelStatus(userId);
+  return getEnglishStatus(result.status);
+};

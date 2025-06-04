@@ -2,7 +2,7 @@
   "expo": {
     "name": "Oh My Poop",
     "slug": "oh-my-poop",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,10 +16,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chad.ohmypoop",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSFaceIDUsageDescription": "이 앱은 빠르고 안전한 로그인을 위해 Face ID를 사용합니다."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -27,14 +26,13 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3D4127"
       },
-      "package": "com.chad.ohmypoop",
-      "permissions": ["USE_FINGERPRINT", "USE_BIOMETRIC"]
+      "package": "com.chad.ohmypoop"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-font", "expo-local-authentication"],
+    "plugins": ["expo-font", "expo-apple-authentication"],
     "fonts": [
       {
         "asset": "./assets/fonts/Pattaya-Regular.ttf",
