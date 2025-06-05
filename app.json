@@ -17,6 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.chad.ohmypoop",
       "buildNumber": "4",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
