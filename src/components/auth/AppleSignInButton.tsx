@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View, Alert } from "react-native";
+import { StyleSheet, View, Alert, TouchableOpacity, Text } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useAuthStore } from "../../stores/authStore";
 import { isAppleAuthAvailable } from "../../utils/appleAuth";
@@ -49,8 +49,30 @@ export const AppleSignInButton: React.FC<AppleSignInButtonProps> = ({
     }
   }, [signInWithApple, isLoading]);
 
+  // Apple 인증이 불가능한 경우에만 대체 버튼 표시
   if (!isAvailable) {
-    return null; // Apple ID 로그인이 지원되지 않는 경우 숨김
+    return (
+      <View style={[styles.container, style]}>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            {
+              backgroundColor: "#000",
+              justifyContent: "center",
+              alignItems: "center",
+              borderRadius: 8,
+            },
+          ]}
+          onPress={() =>
+            Alert.alert("Apple 로그인", "Apple 로그인을 사용할 수 없습니다.")
+          }
+        >
+          <Text style={{ color: "#fff", fontWeight: "600" }}>
+            Continue with Apple
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
