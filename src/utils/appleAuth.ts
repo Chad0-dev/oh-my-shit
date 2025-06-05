@@ -52,11 +52,11 @@ export async function signInWithApple(): Promise<AppleAuthResult> {
       };
     }
 
-    // Supabase에 Apple ID 토큰 전달 (Bundle ID 사용)
+    // Supabase에 Apple ID 토큰 전달 (Services ID 사용)
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: "apple",
       token: credential.identityToken,
-      nonce: undefined, // Bundle ID 사용 시 nonce 비활성화
+      nonce: "com.chad.ohmypoop.auth", // Services ID 사용
     });
 
     if (error) {

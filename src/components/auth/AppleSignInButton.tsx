@@ -64,7 +64,12 @@ export const AppleSignInButton: React.FC<AppleSignInButtonProps> = ({
             },
           ]}
           onPress={() =>
-            Alert.alert("Apple 로그인", "Apple 로그인을 사용할 수 없습니다.")
+            Alert.alert(
+              "Apple 로그인 진단",
+              `Apple 인증 가용성: ${isAvailable}\n플랫폼: iOS\n환경: ${
+                __DEV__ ? "Development" : "Production"
+              }\n\n가능한 원인:\n• Apple Developer Console에서 Sign In with Apple 미활성화\n• Services ID 설정 오류\n• Bundle ID 불일치`
+            )
           }
         >
           <Text style={{ color: "#fff", fontWeight: "600" }}>

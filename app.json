@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#3D4127"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.chad.ohmypoop",
@@ -33,7 +35,10 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-font", "expo-apple-authentication"],
+    "plugins": [
+      "expo-font",
+      "expo-apple-authentication"
+    ],
     "fonts": [
       {
         "asset": "./assets/fonts/Pattaya-Regular.ttf",
@@ -44,6 +49,12 @@
       "eas": {
         "projectId": "afb84fb1-58e5-4293-a136-8c1d25f12332"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/afb84fb1-58e5-4293-a136-8c1d25f12332"
     }
   }
 }
