@@ -27,7 +27,8 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
-  const { signIn, isLoading, error, clearError } = useAuthStore();
+  const { signIn, signInWithGoogle, isLoading, error, clearError } =
+    useAuthStore();
   const { isDark } = useThemeStore();
 
   const [email, setEmail] = useState("");
@@ -128,9 +129,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
             {/* Google 로그인 */}
             <TouchableOpacity
               style={styles.googleButton}
-              onPress={() =>
-                Alert.alert("구글 로그인", "아직 미구현 기능입니다.")
-              }
+              onPress={signInWithGoogle}
             >
               <View style={styles.googleTextContainer}>
                 <StyledText
