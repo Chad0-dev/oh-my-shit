@@ -303,6 +303,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithApple: async () => {
     try {
+      // 함수 호출 확인용 Alert
+      Alert.alert("디버그", "authStore.signInWithApple 호출됨");
+
       set({ isLoading: true, error: null });
 
       const appleAuthResult = await signInWithApple();
