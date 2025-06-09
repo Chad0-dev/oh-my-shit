@@ -1,6 +1,7 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { supabase } from "../supabase/client";
 import Constants from "expo-constants";
+import { Alert } from "react-native";
 
 export interface AppleAuthResult {
   success: boolean;
@@ -35,6 +36,9 @@ export async function isAppleAuthAvailable(): Promise<boolean> {
 // Apple ID 로그인 실행
 export async function signInWithApple(): Promise<AppleAuthResult> {
   try {
+    // 함수 실행 확인용 Alert
+    Alert.alert("테스트", "Apple 로그인 함수 시작됨");
+
     const available = await isAppleAuthAvailable();
 
     if (!available) {
@@ -55,6 +59,8 @@ export async function signInWithApple(): Promise<AppleAuthResult> {
 
     // 보안을 위해 민감한 정보는 로그에 출력하지 않음
     console.log("Apple 인증 성공 - 토큰 검증 중...");
+    console.log(`현재 환경: ${Constants.appOwnership}`);
+    console.log(`실행 모드: ${__DEV__ ? "Development" : "Production"}`);
 
     // identityToken 검증
     if (!credential.identityToken) {
@@ -66,7 +72,17 @@ export async function signInWithApple(): Promise<AppleAuthResult> {
 
     // Supabase에 Apple ID 토큰 전달 (동적 Bundle ID 사용)
     const currentBundleId = getCurrentBundleId();
-    console.log(`Apple 로그인 시도 - Bundle ID: ${currentBundleId}`);
+    console.log(`사용 중인 Bundle ID: ${currentBundleId}`);
+    console.log(`토큰 길이: ${credential.identityToken.length}`);
+
+    // 디버깅용 Alert (모든 환경)
+    Alert.alert(
+      "디버그 정보",
+      `환경: ${Constants.appOwnership}\n` +
+        `Bundle ID: ${currentBundleId}\n` +
+        `토큰 길이: ${credential.identityToken.length}`,
+      [{ text: "확인", onPress: () => {} }]
+    );
 
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: "apple",
@@ -75,6 +91,14 @@ export async function signInWithApple(): Promise<AppleAuthResult> {
     });
 
     if (error) {
+      // 상세 에러 Alert (모든 환경)
+      Alert.alert(
+        "Supabase 에러 상세",
+        `에러 메시지: ${error.message}\n` +
+          `에러 코드: ${error.status || "N/A"}\n` +
+          `Bundle ID: ${currentBundleId}`,
+        [{ text: "확인" }]
+      );
       throw error;
     }
 
