@@ -1,5 +1,6 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { supabase } from "../supabase/client";
+import Constants from "expo-constants";
 
 export interface AppleAuthResult {
   success: boolean;
@@ -8,6 +9,17 @@ export interface AppleAuthResult {
     id: string;
     email: string;
   };
+}
+
+// 현재 실행 환경에 따라 올바른 Bundle ID 반환
+function getCurrentBundleId(): string {
+  // Expo Go에서 실행 중인지 확인
+  if (Constants.appOwnership === "expo") {
+    return "host.exp.Exponent"; // Expo Go Bundle ID
+  }
+
+  // 실제 앱 Bundle ID
+  return "com.chad.ohmypoop";
 }
 
 // Apple ID 로그인 가능 여부 확인
@@ -52,7 +64,10 @@ export async function signInWithApple(): Promise<AppleAuthResult> {
       };
     }
 
-    // Supabase에 Apple ID 토큰 전달 (Bundle ID 사용)
+    // Supabase에 Apple ID 토큰 전달 (동적 Bundle ID 사용)
+    const currentBundleId = getCurrentBundleId();
+    console.log(`Apple 로그인 시도 - Bundle ID: ${currentBundleId}`);
+
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: "apple",
       token: credential.identityToken,

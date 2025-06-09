@@ -27,8 +27,7 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
-  const { signIn, signInWithGoogle, isLoading, error, clearError } =
-    useAuthStore();
+  const { signIn, isLoading, error, clearError } = useAuthStore();
   const { isDark } = useThemeStore();
 
   const [email, setEmail] = useState("");
@@ -126,10 +125,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
 
           {/* 입력 폼 영역 */}
           <View style={styles.formContainer}>
-            {/* Google 로그인 */}
+            {/* Google 로그인 (개발 중) */}
             <TouchableOpacity
               style={styles.googleButton}
-              onPress={signInWithGoogle}
+              onPress={() =>
+                Alert.alert(
+                  "개발 중",
+                  "Google 로그인 기능은 현재 개발 중입니다.\n곧 사용할 수 있도록 준비하고 있어요! 🚀",
+                  [{ text: "확인", style: "default" }]
+                )
+              }
             >
               <View style={styles.googleTextContainer}>
                 <StyledText
@@ -170,8 +175,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
               </View>
             </TouchableOpacity>
 
-            {/* Apple 로그인 메인 */}
-            <AppleSignInButton style={styles.appleButton} />
+            {/* Apple 로그인 메인 - iOS에서만 표시 */}
+            {Platform.OS === "ios" && (
+              <AppleSignInButton style={styles.appleButton} />
+            )}
 
             {/* 다른 방법으로 로그인 토글 */}
             <TouchableOpacity
@@ -302,29 +309,6 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: "cover",
   },
-  googleButton: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  googleTextContainer: {
-    flexDirection: "row",
-  },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
   appleButton: {
     marginBottom: 6,
   },
@@ -359,5 +343,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     paddingHorizontal: 20,
+  },
+  googleButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  googleTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

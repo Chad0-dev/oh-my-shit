@@ -3,7 +3,6 @@ import { supabase } from "../supabase/client";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase/config";
 import { Alert } from "react-native";
 import { signInWithApple, isAppleAuthAvailable } from "../utils/appleAuth";
-import { signInWithGoogle } from "../utils/googleAuth";
 
 interface User {
   id: string;
@@ -27,7 +26,6 @@ interface AuthState {
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   initializeAuth: () => Promise<void>;
   signInWithApple: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -365,73 +363,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error("Apple 로그인 처리 오류:", error);
       set({
         error: error.message || "Apple ID 로그인 중 오류가 발생했습니다.",
-        isLoading: false,
-      });
-    }
-  },
-
-  signInWithGoogle: async () => {
-    try {
-      set({ isLoading: true, error: null });
-
-      const googleAuthResult = await signInWithGoogle();
-
-      if (!googleAuthResult.success) {
-        set({
-          error: googleAuthResult.error || "Google 로그인에 실패했습니다.",
-          isLoading: false,
-        });
-        return;
-      }
-
-      if (!googleAuthResult.user) {
-        set({
-          error: "Google 로그인 정보를 가져올 수 없습니다.",
-          isLoading: false,
-        });
-        return;
-      }
-
-      const { email, id } = googleAuthResult.user;
-
-      // 사용자 정보 가져오기
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (userError && userError.code !== "PGRST116") {
-        console.error("사용자 정보 조회 실패:", userError);
-        // 사용자 정보 조회 실패해도 기본 정보로 로그인 진행
-      }
-
-      // Google 로그인 성공 시 사용자 정보가 없으면 생성
-      if (userError?.code === "PGRST116") {
-        const { error: createUserError } = await supabase.from("users").insert({
-          id,
-          email,
-          age_group: null, // Google 로그인은 나이 정보 없음
-        });
-
-        if (createUserError) {
-          console.error("사용자 생성 실패:", createUserError);
-          // 생성 실패해도 로그인은 진행
-        }
-      }
-
-      set({
-        user: {
-          id,
-          email,
-          age_group: userData?.age_group,
-        },
-        isLoading: false,
-      });
-    } catch (error: any) {
-      console.error("Google 로그인 처리 오류:", error);
-      set({
-        error: error.message || "Google 로그인 중 오류가 발생했습니다.",
         isLoading: false,
       });
     }
