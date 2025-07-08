@@ -3,6 +3,7 @@ import { supabase } from "../supabase/client";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase/config";
 import { Alert } from "react-native";
 import { signInWithApple, isAppleAuthAvailable } from "../utils/appleAuth";
+import { signInWithGoogle } from "../utils/googleAuth";
 
 interface User {
   id: string;
@@ -26,6 +27,7 @@ interface AuthState {
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   initializeAuth: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -215,7 +217,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!user) throw new Error("로그인 정보가 없습니다.");
 
       const userId = user.id;
-      console.log("계정 처리 프로세스 시작 - 사용자 ID:", userId);
 
       try {
         // 생성한 보안 정의자 함수를 호출하여 계정 삭제 시도
@@ -225,11 +226,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           console.error("계정 삭제 실패:", error);
 
           // 오류 발생 시 기존 방식으로 폴백 - 앱 데이터만 삭제
-          console.log("기존 방식으로 계정 처리 진행");
-
-          // 1단계: 사용자의 기록(데이터) 삭제
           try {
-            console.log("1. 기록 데이터 삭제 시도");
             const { error: recordsError } = await supabase
               .from("shit_records")
               .delete()
@@ -237,8 +234,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             if (recordsError) {
               console.error("기록 삭제 실패:", recordsError);
-            } else {
-              console.log("기록 삭제 성공");
             }
           } catch (e) {
             console.error("기록 삭제 시도 중 오류:", e);
@@ -246,7 +241,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
           // 2단계: users 테이블 삭제 시도 (실패하더라도 계속 진행)
           try {
-            console.log("2. 사용자 데이터 삭제 시도");
             const { error: deleteUserError } = await supabase
               .from("users")
               .delete()
@@ -254,8 +248,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             if (deleteUserError) {
               console.error("사용자 삭제 실패:", deleteUserError);
-            } else {
-              console.log("사용자 삭제 성공");
             }
           } catch (e) {
             console.error("사용자 삭제 시도 중 오류:", e);
@@ -270,7 +262,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               "⚠️ 계정 정보 완전 삭제를 원하시면 고객센터로 문의해주세요."
           );
         } else {
-          console.log("계정 완전 삭제 성공");
           // 사용자에게 성공 알림
           Alert.alert(
             "처리 완료",
@@ -287,8 +278,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         );
       }
 
-      // 3단계: 로그아웃 처리 (무조건 진행)
-      console.log("3. 로그아웃 처리");
+      // 로그아웃 처리
       await supabase.auth.signOut();
 
       // 로컬 상태 초기화
@@ -303,9 +293,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithApple: async () => {
     try {
-      // 함수 호출 확인용 Alert
-      Alert.alert("디버그", "authStore.signInWithApple 호출됨");
-
       set({ isLoading: true, error: null });
 
       const appleAuthResult = await signInWithApple();
@@ -366,6 +353,74 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error("Apple 로그인 처리 오류:", error);
       set({
         error: error.message || "Apple ID 로그인 중 오류가 발생했습니다.",
+        isLoading: false,
+      });
+    }
+  },
+
+  signInWithGoogle: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const googleAuthResult = await signInWithGoogle();
+
+      if (!googleAuthResult.success) {
+        set({
+          error: googleAuthResult.error || "Google 로그인에 실패했습니다.",
+          isLoading: false,
+        });
+        return;
+      }
+
+      if (!googleAuthResult.user) {
+        set({
+          error: "Google 로그인 정보를 가져올 수 없습니다.",
+          isLoading: false,
+        });
+        return;
+      }
+
+      const { email, id, name } = googleAuthResult.user;
+
+      // 사용자 정보 가져오기
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (userError && userError.code !== "PGRST116") {
+        console.error("사용자 정보 조회 실패:", userError);
+        // 사용자 정보 조회 실패해도 기본 정보로 로그인 진행
+      }
+
+      // Google 로그인 성공 시 사용자 정보가 없으면 생성
+      if (userError?.code === "PGRST116") {
+        const { error: createUserError } = await supabase.from("users").insert({
+          id,
+          email,
+          age_group: null, // Google 로그인은 나이 정보 없음
+          name: name, // Google에서 받은 이름 저장
+        });
+
+        if (createUserError) {
+          console.error("사용자 생성 실패:", createUserError);
+          // 생성 실패해도 로그인은 진행
+        }
+      }
+
+      set({
+        user: {
+          id,
+          email,
+          age_group: userData?.age_group,
+        },
+        isLoading: false,
+      });
+    } catch (error: any) {
+      console.error("Google 로그인 처리 오류:", error);
+      set({
+        error: error.message || "Google 로그인 중 오류가 발생했습니다.",
         isLoading: false,
       });
     }

@@ -20,6 +20,7 @@ import {
 import { Button } from "../../components/ui/Button";
 import { InputField } from "../../components/ui/InputField";
 import { AppleSignInButton } from "../../components/auth/AppleSignInButton";
+import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
 import * as Font from "expo-font";
 
 interface LoginScreenProps {
@@ -125,55 +126,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignUpPress }) => {
 
           {/* 입력 폼 영역 */}
           <View style={styles.formContainer}>
-            {/* Google 로그인 (개발 중) */}
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={() =>
-                Alert.alert(
-                  "개발 중",
-                  "Google 로그인 기능은 현재 개발 중입니다.\n곧 사용할 수 있도록 준비하고 있어요! 🚀",
-                  [{ text: "확인", style: "default" }]
-                )
-              }
-            >
-              <View style={styles.googleTextContainer}>
-                <StyledText
-                  style={[styles.googleButtonText, { color: "#000" }]}
-                >
-                  Continue with{" "}
-                </StyledText>
-                <StyledText
-                  style={[styles.googleButtonText, { color: "#4285F4" }]}
-                >
-                  G
-                </StyledText>
-                <StyledText
-                  style={[styles.googleButtonText, { color: "#EA4335" }]}
-                >
-                  o
-                </StyledText>
-                <StyledText
-                  style={[styles.googleButtonText, { color: "#FBBC05" }]}
-                >
-                  o
-                </StyledText>
-                <StyledText
-                  style={[styles.googleButtonText, { color: "#4285F4" }]}
-                >
-                  g
-                </StyledText>
-                <StyledText
-                  style={[styles.googleButtonText, { color: "#34A853" }]}
-                >
-                  l
-                </StyledText>
-                <StyledText
-                  style={[styles.googleButtonText, { color: "#EA4335" }]}
-                >
-                  e
-                </StyledText>
-              </View>
-            </TouchableOpacity>
+            {/* Google 로그인 */}
+            <GoogleSignInButton style={styles.googleButton} />
 
             {/* Apple 로그인 메인 - iOS에서만 표시 */}
             {Platform.OS === "ios" && (
@@ -345,27 +299,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   googleButton: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  googleTextContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
   },
 });

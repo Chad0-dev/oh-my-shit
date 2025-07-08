@@ -49,35 +49,9 @@ export const AppleSignInButton: React.FC<AppleSignInButtonProps> = ({
     }
   }, [signInWithApple, isLoading]);
 
-  // Apple 인증이 불가능한 경우에만 대체 버튼 표시
+  // Apple 인증이 불가능한 경우 숨김
   if (!isAvailable) {
-    return (
-      <View style={[styles.container, style]}>
-        <TouchableOpacity
-          style={[
-            styles.button,
-            {
-              backgroundColor: "#000",
-              justifyContent: "center",
-              alignItems: "center",
-              borderRadius: 8,
-            },
-          ]}
-          onPress={() =>
-            Alert.alert(
-              "Apple 로그인 진단",
-              `Apple 인증 가용성: ${isAvailable}\n플랫폼: iOS\n환경: ${
-                __DEV__ ? "Development" : "Production"
-              }\n\n가능한 원인:\n• Apple Developer Console에서 Sign In with Apple 미활성화\n• Services ID 설정 오류\n• Bundle ID 불일치`
-            )
-          }
-        >
-          <Text style={{ color: "#fff", fontWeight: "600" }}>
-            Continue with Apple
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
+    return null;
   }
 
   return (

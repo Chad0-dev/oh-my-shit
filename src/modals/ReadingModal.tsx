@@ -140,7 +140,6 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({
 
   // 이미지 에러 처리
   const handleImageError = () => {
-    console.log("이미지 로드 실패:", currentAd?.url);
     setImageError(true);
   };
 

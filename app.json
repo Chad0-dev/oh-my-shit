@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -33,6 +33,7 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
+    "scheme": "com.chad.ohmypoop",
     "plugins": ["expo-font", "expo-apple-authentication"],
     "fonts": [
       {

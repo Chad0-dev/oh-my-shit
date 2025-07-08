@@ -19,18 +19,7 @@ interface CharacterDisplayProps {
   forceLoad?: boolean; // 강제 로드 여부
 }
 
-// 디버깅용 상수
-const DEBUG = false;
 const LOADING_TIMEOUT = 5000; // 5초 후 로딩 타임아웃
-
-/**
- * 디버깅 로그를 출력하는 함수
- */
-const debugLog = (message: string, data?: any) => {
-  if (DEBUG) {
-    console.log(`[DEBUG:CharacterDisplay] ${message}`, data || "");
-  }
-};
 
 /**
  * 캐릭터 이미지를 표시하는 컴포넌트
